@@ -25,15 +25,32 @@ export default function SignUp() {
   const [businessNumber, setBusinessNumber] = useState('') // 사업자 등록 번호 (판매자용)
 
   // 아이디 중복 확인 핸들러
-  const handleCheckUsername = (e: React.MouseEvent) => {
+  const handleCheckUsername = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (!username) {
       alert('아이디를 입력해주세요.')
       return
     }
-    // TODO: 실제 API 연동 시 이곳에서 서버에 아이디 중복 확인 요청을 보냅니다.
-    alert('사용 가능한 아이디입니다.')
-    setIsUsernameChecked(true)
+
+    try {
+      const res = await fetch('/api/check-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      })
+      const data = await res.json()
+
+      if (res.ok && data.isAvailable) {
+        alert('사용 가능한 아이디입니다.')
+        setIsUsernameChecked(true)
+      } else {
+        alert(data.message || '이미 사용 중인 아이디입니다.')
+        setIsUsernameChecked(false)
+      }
+    } catch (error) {
+      console.error(error)
+      alert('중복 확인 중 오류가 발생했습니다.')
+    }
   }
 
   // 이메일 인증번호 전송 핸들러
@@ -43,15 +60,15 @@ export default function SignUp() {
       alert('이메일을 입력해주세요.')
       return
     }
-    // TODO: 서버에 이메일 인증번호 발송 요청
-    alert('인증번호가 전송되었습니다.')
+    // TODO: 서버에 이메일 인증번호 발송 요청 (향후 nodemailer 등 연동)
+    alert('인증번호가 전송되었습니다. (현재 구현 대기중)')
   }
 
   // 주소 검색 핸들러 (예: 다음 우편번호 API 연동)
   const handleSearchAddress = (e: React.MouseEvent) => {
     e.preventDefault()
     // TODO: 카카오/다음 우편번호 검색 서비스 연동
-    alert('주소 검색 팝업 (개발 예정)')
+    alert('주소 검색 팝업 (Daum Postcode 등 연동 예정)')
   }
 
   // 회원가입 폼 제출 핸들러
@@ -72,7 +89,6 @@ export default function SignUp() {
     const payload = {
       name,
       email,
-      emailCode,
       birthdate,
       username,
       password,
@@ -82,10 +98,7 @@ export default function SignUp() {
       // 판매자인 경우에만 회사명과 사업자 등록 번호 포함
       ...(role === 'seller' && { companyName, businessNumber }),
     }
-
-    console.log('회원가입 요청 데이터:', payload)
     
-    // TODO: 실제 API 연동 시 이곳에서 서버에 회원가입 데이터(payload)를 전송합니다.
     try {
       const res = await fetch('/api/signup', {
         method: 'POST',
@@ -93,14 +106,17 @@ export default function SignUp() {
         body: JSON.stringify(payload),
       })
 
+      const data = await res.json()
+
       if (res.ok) {
-        alert('회원가입이 완료되었습니다.')
+        alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.')
+        window.location.href = '/auth?type=login' // 이동
       } else {
-        alert('회원가입에 실패했습니다.')
+        alert(`회원가입 실패: ${data.message || '알 수 없는 오류'}`)
       }
     } catch (error) {
       console.error(error)
-      alert('오류가 발생했습니다.')
+      alert('회원가입 요청 중 오류가 발생했습니다.')
     }
   }
 
