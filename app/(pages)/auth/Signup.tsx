@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import styled from 'styled-components'
+import DaumPostcode from 'react-daum-postcode'
 
 export default function SignUp() {
   // --- 상태 관리 (State Management) ---
@@ -18,6 +19,7 @@ export default function SignUp() {
 
   const [roadAddress, setRoadAddress] = useState('') // 도로명 주소
   const [detailAddress, setDetailAddress] = useState('') // 상세 주소
+  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false) // 주소 검색 모달 창 열림 상태
   
   const [role, setRole] = useState<'general' | 'seller'>('general') // 회원 유형 (일반회원 or 판매자)
   
@@ -75,11 +77,30 @@ export default function SignUp() {
     alert('인증번호가 전송되었습니다. (현재 구현 대기중)')
   }
 
-  // 주소 검색 핸들러 (예: 다음 우편번호 API 연동)
+  // 주소 검색 핸들러 (다음 우편번호 API 모달 열기)
   const handleSearchAddress = (e: React.MouseEvent) => {
     e.preventDefault()
-    // TODO: 카카오/다음 우편번호 검색 서비스 연동
-    alert('주소 검색 팝업 (Daum Postcode 등 연동 예정)')
+    setIsPostcodeOpen(true)
+  }
+
+  // 주소 선택 완료 시 핸들러
+  const handleCompletePostcode = (data: any) => {
+    // 도로명 주소 처리 로직
+    let fullAddress = data.address
+    let extraAddress = ''
+
+    if (data.addressType === 'R') {
+      if (data.bname !== '') {
+        extraAddress += data.bname
+      }
+      if (data.buildingName !== '') {
+        extraAddress += extraAddress !== '' ? `, ${data.buildingName}` : data.buildingName
+      }
+      fullAddress += extraAddress !== '' ? ` (${extraAddress})` : ''
+    }
+
+    setRoadAddress(fullAddress) // 결과 도로명 주소를 입력창 상태에 업데이트
+    setIsPostcodeOpen(false) // 검색이 끝나면 모달 닫기
   }
 
   // 회원가입 폼 제출 핸들러
@@ -311,6 +332,20 @@ export default function SignUp() {
           <a href="/auth?type=login">이미 계정이 있으신가요? 로그인</a>
         </Links>
       </SignUpBox>
+
+      {/* 우편번호 검색 모달 오버레이 */}
+      {isPostcodeOpen && (
+        <PostcodeOverlay onClick={() => setIsPostcodeOpen(false)}>
+          {/* 모달 내용물 (클릭 이벤트 전파 방지) */}
+          <PostcodeContainer onClick={(e) => e.stopPropagation()}>
+            <CloseButton onClick={() => setIsPostcodeOpen(false)}>닫기</CloseButton>
+            <DaumPostcode 
+              onComplete={handleCompletePostcode}
+              autoClose={false}
+            />
+          </PostcodeContainer>
+        </PostcodeOverlay>
+      )}
     </Container>
   )
 }
@@ -463,5 +498,42 @@ const Links = styled.div`
 
   a:hover {
     text-decoration: underline;
+  }
+`
+
+// --- 주소 검색 모달 전용 스타일 ---
+const PostcodeOverlay = styled.div`
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* 반투명 검은 배경 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`
+
+const PostcodeContainer = styled.div`
+  width: 90%;
+  max-width: 500px;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+`
+
+const CloseButton = styled.button`
+  align-self: flex-end;
+  background-color: #e2e8f0;
+  border: none;
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  
+  &:hover {
+    background-color: #cbd5e0;
   }
 `
