@@ -64,6 +64,7 @@ const InputField = styled.input`
   border-radius: 8px;
   font-size: 1rem;
   background-color: #f9f9f9;
+  color: #1a202c; /* 하얀 배경에서 입력된 글씨가 보이도록 텍스트 색상을 어두운 색으로 지정했습니다. */
 `
 
 const SendCodeButton = styled.button`

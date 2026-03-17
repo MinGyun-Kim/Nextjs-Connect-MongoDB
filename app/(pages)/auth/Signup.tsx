@@ -27,28 +27,39 @@ export default function SignUp() {
   // 아이디 중복 확인 핸들러
   const handleCheckUsername = async (e: React.MouseEvent) => {
     e.preventDefault()
+    
+    // 1. 사용자가 아이디 입력칸에 아무것도 적지 않았다면 입력을 유도하는 팝업창을 띄웁니다.
     if (!username) {
       alert('아이디를 입력해주세요.')
       return
     }
 
     try {
+      // 2. 서버의 API 경로('/api/check-username')로 입력한 아이디 검사를 요청합니다. 
       const res = await fetch('/api/check-username', {
-        method: 'POST',
+        method: 'POST', // 입력 정보를 서버에 안전하게 넘기기 위해 POST 방식을 사용합니다.
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ username }), // 검사할 아이디 정보를 담아 서버로 전송합니다.
       })
+      
+      // 3. 서버에서 DB 확인 후 보내준 응답 데이터를 받아옵니다 (JSON 형식).
       const data = await res.json()
 
+      // 4. 응답 성공 시, 서버에서 보내준 중복 여부(data.isAvailable)를 확인합니다.
       if (res.ok && data.isAvailable) {
+        // [조건 1] 만약 중복된 아이디가 없다면(사용가능하다면) '사용 가능한 아이디입니다.'라고 팝업창을 띄워줍니다.
         alert('사용 가능한 아이디입니다.')
+        // 이후 회원가입 제출 시 중복 확인 절차를 통과했음을 알기 위해 상태를 저장합니다.
         setIsUsernameChecked(true)
       } else {
+        // [조건 2] 만약 기존 회원의 아이디와 중복이 된다면 '이미 사용 중인 아이디입니다.'라고 팝업창을 띄워줍니다.
         alert(data.message || '이미 사용 중인 아이디입니다.')
+        // 중복된 경우 상태를 false로 두어 회원가입 완료가 안 되게 막습니다.
         setIsUsernameChecked(false)
       }
     } catch (error) {
       console.error(error)
+      // 통신 에러 등 예외 상황 발생 시를 대비한 팝업창입니다.
       alert('중복 확인 중 오류가 발생했습니다.')
     }
   }
@@ -75,6 +86,24 @@ export default function SignUp() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // [필수 입력란 누락 검사 (수동 알림 로직 추가)]
+    // HTML5의 기본 required 속성을 제거하고, 가입하기(submit) 버튼을 눌렀을 때만
+    // 누락된 항목이 무엇인지 팝업(alert) 방식으로 직관적으로 띄워주기 위해 아래 로직을 작성했습니다.
+    // 기존에 "중복 확인" 버튼을 눌렀을 때도 필드를 채우라고 나오지 않도록 
+    // 중복 확인 버튼은 type="button"으로 폼 제출과 분리(별개 취급)했습니다.
+    if (!name) return alert('이름을 입력해주세요.')
+    if (!birthdate) return alert('생년월일을 입력해주세요.')
+    if (!username) return alert('아이디를 입력해주세요.')
+    if (!password) return alert('비밀번호를 입력해주세요.')
+    if (!passwordConfirm) return alert('비밀번호 확인을 입력해주세요.')
+    if (!email) return alert('이메일을 입력해주세요.')
+    if (!emailCode) return alert('이메일 인증 번호를 입력해주세요.')
+    
+    if (role === 'seller') {
+      if (!companyName) return alert('회사명을 입력해주세요.')
+      if (!businessNumber) return alert('사업자 등록 번호를 입력해주세요.')
+    }
+
     // 유효성 검사 (비밀번호 확인, 아이디 중복확인)
     if (password !== passwordConfirm) {
       alert('비밀번호가 일치하지 않습니다.')
@@ -157,8 +186,7 @@ export default function SignUp() {
             type="text" 
             placeholder="이름을 입력하세요" 
             value={name} 
-            onChange={(e) => setName(e.target.value)} 
-            required
+            onChange={(e) => setName(e.target.value)}
           />
         </InputGroup>
         
@@ -168,8 +196,7 @@ export default function SignUp() {
           <InputField 
             type="date" 
             value={birthdate} 
-            onChange={(e) => setBirthdate(e.target.value)} 
-            required
+            onChange={(e) => setBirthdate(e.target.value)}
           />
         </InputGroup>
 
@@ -184,10 +211,9 @@ export default function SignUp() {
               onChange={(e) => { 
                 setUsername(e.target.value); 
                 setIsUsernameChecked(false); // 입력 값이 변경되면 중복 확인 상태 초기화
-              }} 
-              required
+              }}
             />
-            <ActionButton onClick={handleCheckUsername}>중복 확인</ActionButton>
+            <ActionButton type="button" onClick={handleCheckUsername}>중복 확인</ActionButton>
           </FlexRow>
         </InputGroup>
 
@@ -198,16 +224,14 @@ export default function SignUp() {
             type="password" 
             placeholder="비밀번호" 
             value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            required
+            onChange={(e) => setPassword(e.target.value)}
           />
           <InputField 
             type="password" 
             placeholder="비밀번호 확인" 
             value={passwordConfirm} 
             onChange={(e) => setPasswordConfirm(e.target.value)} 
-            style={{ marginTop: '0.5rem' }} 
-            required
+            style={{ marginTop: '0.5rem' }}
           />
           {password && passwordConfirm && password !== passwordConfirm && (
             <ErrorMessage>비밀번호가 일치하지 않습니다.</ErrorMessage>
@@ -222,18 +246,16 @@ export default function SignUp() {
               type="email" 
               placeholder="이메일을 입력하세요" 
               value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required
+              onChange={(e) => setEmail(e.target.value)}
             />
-            <ActionButton onClick={handleSendEmailCode}>인증번호 발송</ActionButton>
+            <ActionButton type="button" onClick={handleSendEmailCode}>인증번호 발송</ActionButton>
           </FlexRow>
           <InputField 
             type="text" 
             placeholder="이메일 인증 번호를 입력하세요" 
             value={emailCode} 
             onChange={(e) => setEmailCode(e.target.value)} 
-            style={{ marginTop: '0.5rem' }} 
-            required
+            style={{ marginTop: '0.5rem' }}
           />
         </InputGroup>
 
@@ -247,7 +269,7 @@ export default function SignUp() {
                value={roadAddress} 
                onChange={(e) => setRoadAddress(e.target.value)}
              />
-             <ActionButton onClick={handleSearchAddress}>주소 검색</ActionButton>
+             <ActionButton type="button" onClick={handleSearchAddress}>주소 검색</ActionButton>
           </FlexRow>
           <InputField 
             type="text" 
@@ -267,8 +289,7 @@ export default function SignUp() {
                 type="text" 
                 placeholder="회사명을 입력하세요" 
                 value={companyName} 
-                onChange={(e) => setCompanyName(e.target.value)} 
-                required
+                onChange={(e) => setCompanyName(e.target.value)}
               />
             </InputGroup>
             <InputGroup>
@@ -277,8 +298,7 @@ export default function SignUp() {
                 type="text" 
                 placeholder="사업자 등록 번호를 입력하세요" 
                 value={businessNumber} 
-                onChange={(e) => setBusinessNumber(e.target.value)} 
-                required
+                onChange={(e) => setBusinessNumber(e.target.value)}
               />
             </InputGroup>
           </SellerSection>
@@ -370,6 +390,7 @@ const InputField = styled.input`
   border-radius: 8px;
   font-size: 1rem;
   background-color: #f8fafc;
+  color: #1a202c; /* 하얀 배경에서 입력된 글씨가 보이도록 텍스트 색상을 어두운 색으로 지정했습니다. */
   box-sizing: border-box;
   transition: border-color 0.2s;
 

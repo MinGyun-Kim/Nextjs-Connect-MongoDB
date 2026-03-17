@@ -8,6 +8,7 @@ import User from '@/db/models/user'
  */
 export async function GET(req: NextRequest) {
   await dbConnect()
+  console.log('MongoDB 연결 완료: Test (Nickname Check) API')
   const nickname = req.nextUrl.searchParams.get('nickname')
 
   if (!nickname) {

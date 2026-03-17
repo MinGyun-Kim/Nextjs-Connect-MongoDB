@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs'
 export async function POST(req: Request) {
   try {
     await dbConnect()
+    console.log('MongoDB 연결 완료: Sign Up API')
 
     // 1. 요청 바디 데이터 파싱
     const body = await req.json()

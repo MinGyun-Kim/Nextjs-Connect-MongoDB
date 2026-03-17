@@ -34,7 +34,7 @@ function AuthContent() {
 
   return (
     <Container>
-      {type === 'login' && (
+      {(!type || type === 'login') && (
         <LoginBox>
           <Image src={Gaitwise} alt="logo" width={100} height={100} layout="responsive" />
           <Title>Hi, Welcome Back!</Title>
@@ -148,6 +148,7 @@ const InputField = styled.input`
   border-radius: 8px;
   font-size: 1rem;
   background-color: #f9f9f9;
+  color: #1a202c; /* 하얀 배경에서 입력된 글씨가 보이도록 텍스트 색상을 어두운 색으로 지정했습니다. */
 `
 
 const LoginButton = styled.button`
