@@ -13,10 +13,7 @@ export async function POST(req: Request) {
 
     // 3. 만약 아이디가 비어있는 채로 요청이 왔다면 400 에러와 함께 메시지를 반환합니다.
     if (!username) {
-      return NextResponse.json(
-        { message: '아이디를 입력해주세요.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: '아이디를 입력해주세요.' }, { status: 400 })
     }
 
     // 4. DB에서 회원 정보 확인: User 컬렉션에서 동일한 username(아이디)을 가진 회원이 있는지 조회합니다.
@@ -40,9 +37,6 @@ export async function POST(req: Request) {
   } catch (error) {
     // 7. 서버 내부(DB 등)에서 예기치 못한 에러가 날 경우 500 상태 코드와 에러 메시지를 보냅니다.
     console.error('Check Username Error:', error)
-    return NextResponse.json(
-      { message: '서버 오류가 발생했습니다.' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 })
   }
 }

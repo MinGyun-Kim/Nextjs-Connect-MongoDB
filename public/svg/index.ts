@@ -1,3 +1,3 @@
-import Gaitwise from './gaitwise.svg';
+import Gaitwise from './gaitwise.svg'
 
-export { Gaitwise };
+export { Gaitwise }

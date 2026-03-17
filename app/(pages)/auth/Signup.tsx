@@ -10,26 +10,26 @@ export default function SignUp() {
   const [email, setEmail] = useState('') // 이메일
   const [emailCode, setEmailCode] = useState('') // 이메일 인증 번호
   const [birthdate, setBirthdate] = useState('') // 생년월일
-  
+
   const [username, setUsername] = useState('') // 아이디
   const [isUsernameChecked, setIsUsernameChecked] = useState(false) // 아이디 중복 확인 여부
-  
+
   const [password, setPassword] = useState('') // 비밀번호
   const [passwordConfirm, setPasswordConfirm] = useState('') // 비밀번호 확인
 
   const [roadAddress, setRoadAddress] = useState('') // 도로명 주소
   const [detailAddress, setDetailAddress] = useState('') // 상세 주소
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false) // 주소 검색 모달 창 열림 상태
-  
+
   const [role, setRole] = useState<'general' | 'seller'>('general') // 회원 유형 (일반회원 or 판매자)
-  
+
   const [companyName, setCompanyName] = useState('') // 회사명 (판매자용)
   const [businessNumber, setBusinessNumber] = useState('') // 사업자 등록 번호 (판매자용)
 
   // 아이디 중복 확인 핸들러
   const handleCheckUsername = async (e: React.MouseEvent) => {
     e.preventDefault()
-    
+
     // 1. 사용자가 아이디 입력칸에 아무것도 적지 않았다면 입력을 유도하는 팝업창을 띄웁니다.
     if (!username) {
       alert('아이디를 입력해주세요.')
@@ -37,13 +37,13 @@ export default function SignUp() {
     }
 
     try {
-      // 2. 서버의 API 경로('/api/check-username')로 입력한 아이디 검사를 요청합니다. 
+      // 2. 서버의 API 경로('/api/check-username')로 입력한 아이디 검사를 요청합니다.
       const res = await fetch('/api/check-username', {
         method: 'POST', // 입력 정보를 서버에 안전하게 넘기기 위해 POST 방식을 사용합니다.
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username }), // 검사할 아이디 정보를 담아 서버로 전송합니다.
       })
-      
+
       // 3. 서버에서 DB 확인 후 보내준 응답 데이터를 받아옵니다 (JSON 형식).
       const data = await res.json()
 
@@ -66,15 +66,82 @@ export default function SignUp() {
     }
   }
 
+  // 이메일 인증 관련 추가 상태
+  const [isEmailSent, setIsEmailSent] = useState(false) // 인증번호가 발송되었는지 여부
+  const [isEmailVerified, setIsEmailVerified] = useState(false) // 인증이 최종 완료되었는지 여부
+
   // 이메일 인증번호 전송 핸들러
-  const handleSendEmailCode = (e: React.MouseEvent) => {
+  const handleSendEmailCode = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (!email) {
       alert('이메일을 입력해주세요.')
       return
     }
-    // TODO: 서버에 이메일 인증번호 발송 요청 (향후 nodemailer 등 연동)
-    alert('인증번호가 전송되었습니다. (현재 구현 대기중)')
+
+    try {
+      // 1. 발송 중임을 알리기 위해 임시 알림
+      alert('인증번호를 발송 중입니다. 잠시만 기다려주세요.')
+
+      // 2. 서버의 발송 API로 요청을 보냅니다.
+      const res = await fetch('/api/send-email-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await res.json()
+
+      // 3. 발송 성공 시 완료 안내
+      if (res.ok && data.success) {
+        alert('이메일로 인증번호가 발송되었습니다. 5분 안에 입력해주세요.')
+        setIsEmailSent(true)
+        setIsEmailVerified(false) // 새 번호를 받았으므로 인증 통과 상태는 초기화
+      } else {
+        alert(data.message || '인증번호 발송에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('서버 통신 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 이메일 인증 코드가 맞는지 검증하는 핸들러
+  const handleVerifyEmailCode = async (e: React.MouseEvent) => {
+    e.preventDefault()
+
+    // 1. 코드를 입력하지 않았거나, 아예 번호를 보낸적이 없으면 튕겨냅니다.
+    if (!emailCode) {
+      alert('인증번호를 먼저 입력해주세요.')
+      return
+    }
+    if (!isEmailSent) {
+      alert('먼저 "인증번호 발송" 버튼을 눌러주세요.')
+      return
+    }
+
+    try {
+      // 2. 서버의 검증 API로 요청을 보냅니다.
+      const res = await fetch('/api/verify-email-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code: emailCode }),
+      })
+
+      const data = await res.json()
+
+      // 3. 코드가 일치한다면 인증 통과!
+      if (res.ok && data.isValid) {
+        alert('이메일 인증이 완료되었습니다.')
+        setIsEmailVerified(true)
+      } else {
+        // 일치하지 않거나 만료된 경우
+        alert(data.message || '인증번호가 일치하지 않습니다. 다시 확인해주세요.')
+        setIsEmailVerified(false)
+      }
+    } catch (error) {
+      console.error(error)
+      alert('검증 중 오류가 발생했습니다.')
+    }
   }
 
   // 주소 검색 핸들러 (다음 우편번호 API 모달 열기)
@@ -84,6 +151,7 @@ export default function SignUp() {
   }
 
   // 주소 선택 완료 시 핸들러
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCompletePostcode = (data: any) => {
     // 도로명 주소 처리 로직
     let fullAddress = data.address
@@ -106,11 +174,11 @@ export default function SignUp() {
   // 회원가입 폼 제출 핸들러
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // [필수 입력란 누락 검사 (수동 알림 로직 추가)]
     // HTML5의 기본 required 속성을 제거하고, 가입하기(submit) 버튼을 눌렀을 때만
     // 누락된 항목이 무엇인지 팝업(alert) 방식으로 직관적으로 띄워주기 위해 아래 로직을 작성했습니다.
-    // 기존에 "중복 확인" 버튼을 눌렀을 때도 필드를 채우라고 나오지 않도록 
+    // 기존에 "중복 확인" 버튼을 눌렀을 때도 필드를 채우라고 나오지 않도록
     // 중복 확인 버튼은 type="button"으로 폼 제출과 분리(별개 취급)했습니다.
     if (!name) return alert('이름을 입력해주세요.')
     if (!birthdate) return alert('생년월일을 입력해주세요.')
@@ -119,7 +187,7 @@ export default function SignUp() {
     if (!passwordConfirm) return alert('비밀번호 확인을 입력해주세요.')
     if (!email) return alert('이메일을 입력해주세요.')
     if (!emailCode) return alert('이메일 인증 번호를 입력해주세요.')
-    
+
     if (role === 'seller') {
       if (!companyName) return alert('회사명을 입력해주세요.')
       if (!businessNumber) return alert('사업자 등록 번호를 입력해주세요.')
@@ -132,6 +200,10 @@ export default function SignUp() {
     }
     if (!isUsernameChecked) {
       alert('아이디 중복 확인을 해주세요.')
+      return
+    }
+    if (!isEmailVerified) {
+      alert('이메일 인증을 완료해주세요.')
       return
     }
 
@@ -148,7 +220,7 @@ export default function SignUp() {
       // 판매자인 경우에만 회사명과 사업자 등록 번호 포함
       ...(role === 'seller' && { companyName, businessNumber }),
     }
-    
+
     try {
       const res = await fetch('/api/signup', {
         method: 'POST',
@@ -203,55 +275,53 @@ export default function SignUp() {
         {/* 2. 이름 입력란 */}
         <InputGroup>
           <Label>이름</Label>
-          <InputField 
-            type="text" 
-            placeholder="이름을 입력하세요" 
-            value={name} 
+          <InputField
+            type="text"
+            placeholder="이름을 입력하세요"
+            value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </InputGroup>
-        
+
         {/* 3. 생년월일 입력란 */}
         <InputGroup>
           <Label>생년월일</Label>
-          <InputField 
-            type="date" 
-            value={birthdate} 
-            onChange={(e) => setBirthdate(e.target.value)}
-          />
+          <InputField type="date" value={birthdate} onChange={(e) => setBirthdate(e.target.value)} />
         </InputGroup>
 
         {/* 4. 아이디 및 중복확인 버튼 */}
         <InputGroup>
           <Label>아이디</Label>
           <FlexRow>
-            <InputField 
-              type="text" 
-              placeholder="아이디를 입력하세요" 
-              value={username} 
-              onChange={(e) => { 
-                setUsername(e.target.value); 
-                setIsUsernameChecked(false); // 입력 값이 변경되면 중복 확인 상태 초기화
+            <InputField
+              type="text"
+              placeholder="아이디를 입력하세요"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value)
+                setIsUsernameChecked(false) // 입력 값이 변경되면 중복 확인 상태 초기화
               }}
             />
-            <ActionButton type="button" onClick={handleCheckUsername}>중복 확인</ActionButton>
+            <ActionButton type="button" onClick={handleCheckUsername}>
+              중복 확인
+            </ActionButton>
           </FlexRow>
         </InputGroup>
 
         {/* 5. 비밀번호 및 비밀번호 확인란 */}
         <InputGroup>
           <Label>비밀번호</Label>
-          <InputField 
-            type="password" 
-            placeholder="비밀번호" 
-            value={password} 
+          <InputField
+            type="password"
+            placeholder="비밀번호"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <InputField 
-            type="password" 
-            placeholder="비밀번호 확인" 
-            value={passwordConfirm} 
-            onChange={(e) => setPasswordConfirm(e.target.value)} 
+          <InputField
+            type="password"
+            placeholder="비밀번호 확인"
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
             style={{ marginTop: '0.5rem' }}
           />
           {password && passwordConfirm && password !== passwordConfirm && (
@@ -263,41 +333,59 @@ export default function SignUp() {
         <InputGroup>
           <Label>이메일</Label>
           <FlexRow>
-            <InputField 
-              type="email" 
-              placeholder="이메일을 입력하세요" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)}
+            <InputField
+              type="email"
+              placeholder="이메일을 입력하세요"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                setIsEmailVerified(false) // 이메일을 수정하면 무조건 기존 인증은 무효가 되게 세팅
+                setIsEmailSent(false)
+              }}
+              disabled={isEmailVerified} // 인증이 완료되면 함부로 이메일 주소를 바꾸지 못하도록 막습니다.
             />
-            <ActionButton type="button" onClick={handleSendEmailCode}>인증번호 발송</ActionButton>
+            <ActionButton type="button" onClick={handleSendEmailCode}>
+              {isEmailSent ? '인증번호 재발송' : '인증번호 발송'}
+            </ActionButton>
           </FlexRow>
-          <InputField 
-            type="text" 
-            placeholder="이메일 인증 번호를 입력하세요" 
-            value={emailCode} 
-            onChange={(e) => setEmailCode(e.target.value)} 
-            style={{ marginTop: '0.5rem' }}
-          />
+
+          {/* 인증번호를 전송한 이력이 있을 때만 입력칸을 렌더링합니다. */}
+          {isEmailSent && (
+            <FlexRow style={{ marginTop: '0.5rem' }}>
+              <InputField
+                type="text"
+                placeholder="이메일로 받은 6자리 인증번호를 입력하세요"
+                value={emailCode}
+                onChange={(e) => setEmailCode(e.target.value)}
+                disabled={isEmailVerified} // 이미 성공했으면 더 이상 수정 못하게 막습니다.
+              />
+              <ActionButton type="button" onClick={handleVerifyEmailCode} disabled={isEmailVerified}>
+                {isEmailVerified ? '인증 완료됨' : '인증 확인'}
+              </ActionButton>
+            </FlexRow>
+          )}
         </InputGroup>
 
         {/* 7. 주소 입력란 (도로명 주소 / 상세 주소 분리) */}
         <InputGroup>
           <Label>주소</Label>
           <FlexRow>
-             <InputField 
-               type="text" 
-               placeholder="도로명 주소 (검색 기능을 연동하세요)" 
-               value={roadAddress} 
-               onChange={(e) => setRoadAddress(e.target.value)}
-             />
-             <ActionButton type="button" onClick={handleSearchAddress}>주소 검색</ActionButton>
+            <InputField
+              type="text"
+              placeholder="도로명 주소 (검색 기능을 연동하세요)"
+              value={roadAddress}
+              onChange={(e) => setRoadAddress(e.target.value)}
+            />
+            <ActionButton type="button" onClick={handleSearchAddress}>
+              주소 검색
+            </ActionButton>
           </FlexRow>
-          <InputField 
-            type="text" 
-            placeholder="상세 주소를 입력하세요" 
-            value={detailAddress} 
-            onChange={(e) => setDetailAddress(e.target.value)} 
-            style={{ marginTop: '0.5rem' }} 
+          <InputField
+            type="text"
+            placeholder="상세 주소를 입력하세요"
+            value={detailAddress}
+            onChange={(e) => setDetailAddress(e.target.value)}
+            style={{ marginTop: '0.5rem' }}
           />
         </InputGroup>
 
@@ -306,19 +394,19 @@ export default function SignUp() {
           <SellerSection>
             <InputGroup>
               <Label>회사명</Label>
-              <InputField 
-                type="text" 
-                placeholder="회사명을 입력하세요" 
-                value={companyName} 
+              <InputField
+                type="text"
+                placeholder="회사명을 입력하세요"
+                value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
               />
             </InputGroup>
             <InputGroup>
               <Label>사업자 등록 번호</Label>
-              <InputField 
-                type="text" 
-                placeholder="사업자 등록 번호를 입력하세요" 
-                value={businessNumber} 
+              <InputField
+                type="text"
+                placeholder="사업자 등록 번호를 입력하세요"
+                value={businessNumber}
                 onChange={(e) => setBusinessNumber(e.target.value)}
               />
             </InputGroup>
@@ -339,10 +427,7 @@ export default function SignUp() {
           {/* 모달 내용물 (클릭 이벤트 전파 방지) */}
           <PostcodeContainer onClick={(e) => e.stopPropagation()}>
             <CloseButton onClick={() => setIsPostcodeOpen(false)}>닫기</CloseButton>
-            <DaumPostcode 
-              onComplete={handleCompletePostcode}
-              autoClose={false}
-            />
+            <DaumPostcode onComplete={handleCompletePostcode} autoClose={false} />
           </PostcodeContainer>
         </PostcodeOverlay>
       )}
@@ -504,7 +589,10 @@ const Links = styled.div`
 // --- 주소 검색 모달 전용 스타일 ---
 const PostcodeOverlay = styled.div`
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: rgba(0, 0, 0, 0.5); /* 반투명 검은 배경 */
   display: flex;
   justify-content: center;
@@ -532,7 +620,7 @@ const CloseButton = styled.button`
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
-  
+
   &:hover {
     background-color: #cbd5e0;
   }

@@ -25,27 +25,18 @@ export async function POST(req: Request) {
 
     // 2. 필수값 누락 체크 (간단한 백엔드 유효성 검사)
     if (!name || !email || !birthdate || !username || !password || !role) {
-      return NextResponse.json(
-        { message: '필수 항목이 누락되었습니다.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: '필수 항목이 누락되었습니다.' }, { status: 400 })
     }
 
     // 3. 중복 사용자 체크 (이메일 및 아이디)
     const existingUserByEmail = await User.findOne({ email })
     if (existingUserByEmail) {
-      return NextResponse.json(
-        { message: '이미 존재하는 이메일입니다.' },
-        { status: 409 }
-      )
+      return NextResponse.json({ message: '이미 존재하는 이메일입니다.' }, { status: 409 })
     }
 
     const existingUserByUsername = await User.findOne({ username })
     if (existingUserByUsername) {
-      return NextResponse.json(
-        { message: '이미 존재하는 아이디입니다.' },
-        { status: 409 }
-      )
+      return NextResponse.json({ message: '이미 존재하는 아이디입니다.' }, { status: 409 })
     }
 
     // 4. 비밀번호 암호화 (bcrypt 연동)
@@ -67,15 +58,9 @@ export async function POST(req: Request) {
     })
 
     // 6. 성공 응답
-    return NextResponse.json(
-      { message: '회원가입이 성공적으로 완료되었습니다.', user: newUser },
-      { status: 201 }
-    )
+    return NextResponse.json({ message: '회원가입이 성공적으로 완료되었습니다.', user: newUser }, { status: 201 })
   } catch (error) {
     console.error('Signup Error:', error)
-    return NextResponse.json(
-      { message: '서버 오류가 발생했습니다.' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 })
   }
 }
