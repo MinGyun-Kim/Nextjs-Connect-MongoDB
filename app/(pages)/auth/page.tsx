@@ -49,7 +49,7 @@ function AuthContent() {
                 checked={role === 'analyst'}
                 onChange={(e) => setRole(e.target.value)}
               />
-              Analysts
+              구매자
             </label>
             <label>
               <input
@@ -59,13 +59,13 @@ function AuthContent() {
                 checked={role === 'doctor'}
                 onChange={(e) => setRole(e.target.value)}
               />
-              Doctor
+              판매자
             </label>
           </RoleSelect>
 
           <InputField
             type="email"
-            placeholder="Your Email"
+            placeholder="ID"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
