@@ -12,6 +12,7 @@ export async function POST(req: Request) {
     const body = await req.json()
     const {
       name,
+      phoneNumber, // 클라이언트에서 보낸 전화번호 데이터 추출
       email,
       birthdate,
       username,
@@ -23,8 +24,8 @@ export async function POST(req: Request) {
       businessNumber,
     } = body
 
-    // 2. 필수값 누락 체크 (간단한 백엔드 유효성 검사)
-    if (!name || !email || !birthdate || !username || !password || !role) {
+    // 2. 필수값 누락 체크 (전화번호 포함하여 유효성 검사)
+    if (!name || !phoneNumber || !email || !birthdate || !username || !password || !role) {
       return NextResponse.json({ message: '필수 항목이 누락되었습니다.' }, { status: 400 })
     }
 
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
     // 5. 새 유저 DB 생성
     const newUser = await User.create({
       name,
+      phoneNumber, // DB에 전화번호 저장
       email,
       birthdate,
       username,

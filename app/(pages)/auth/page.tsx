@@ -165,9 +165,10 @@ export default function AuthPage() {
 const Container = styled.div`
   display: flex;
   justify-content: center;
-  align-items: center;
-  height: 100vh;
+  align-items: flex-start; /* 내부 컴포넌트가 길어질 때 짤리지 않도록 변경 */
+  min-height: 100vh; /* 고정 크기가 아닌 최소 크기로 변경하여 넘칠 경우 늘어나게 함 */
   background-color: #f0f4f8;
+  padding: 2rem 0; /* 위아래 스크롤 여유 공간 */
 `
 
 const LoginBox = styled.div`
@@ -177,6 +178,7 @@ const LoginBox = styled.div`
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   text-align: center;
   width: 350px;
+  margin: auto; /* align-items가 flex-start일 때 화면 중앙에 위치시키기 위함 */
 `
 
 const Title = styled.h2`
