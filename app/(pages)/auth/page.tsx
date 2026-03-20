@@ -59,7 +59,7 @@ function AuthContent() {
       }
     } catch (e) {
       console.error(e)
-      alert('로그인 요청 중 서버 오류가 발생했습니다.')
+      alert('로그인 처리 중 오류가 발생했습니다.')
     }
   }
 

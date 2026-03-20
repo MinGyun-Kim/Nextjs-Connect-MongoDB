@@ -51,6 +51,7 @@ export async function POST(req: Request) {
       email,
       birthdate,
       username,
+      userid: username, // [Fix] MongoDB의 옛날 userid_1 인덱스 충돌을 막기 위해 가짜 필드 주입
       password: hashedPassword,
       roadAddress,
       detailAddress,
@@ -63,6 +64,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: '회원가입이 성공적으로 완료되었습니다.', user: newUser }, { status: 201 })
   } catch (error) {
     console.error('Signup Error:', error)
-    return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 })
+    return NextResponse.json({ message: '서버 오류가 발생했습니다.', error: String(error) }, { status: 500 })
   }
 }

@@ -9,6 +9,7 @@ const UserSchema = new mongoose.Schema(
     phoneNumber: { type: String, default: '' }, // 전화번호 필드 추가
 
     username: { type: String, default: '', unique: true }, // 아이디
+    userid: { type: String, default: '' }, // [Fix] 기존 MongoDB index(userid_1) 충돌 방지용 레거시 필드
     password: { type: String, default: '' }, // 암호화된 비밀번호
 
     roadAddress: { type: String, default: '' }, // 도로명 주소
