@@ -28,6 +28,14 @@ export default function Mypage() {
   const [detailAddress, setDetailAddress] = useState('')
   const [newPassword, setNewPassword] = useState('') // (선택) 변경할 새 비밀번호
 
+  // --- [장바구니 탭] 관련 상태 ---
+  const [cartItems, setCartItems] = useState<any[]>([])
+  const [isLoadingCart, setIsLoadingCart] = useState(false)
+
+  // --- [주문 내역 탭] 관련 상태 ---
+  const [orders, setOrders] = useState<any[]>([])
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false)
+
   // 1. 컴포넌트 마운트 시 권한 확인
   useEffect(() => {
     const userStr = localStorage.getItem('user')
@@ -40,6 +48,125 @@ export default function Mypage() {
       router.push('/auth?type=login')
     }
   }, [router])
+
+  // --- 장바구니 데이터 비동기 조회 로직 ---
+  useEffect(() => {
+    // 탭이 장바구니로 바뀌었을 때 && 유저 정보가 있을 때만 서버에 장바구니 목록 요청
+    if (activeTab === 'cart' && currentUser) {
+      const fetchCart = async () => {
+        setIsLoadingCart(true)
+        try {
+          const res = await fetch(`/api/cart?username=${currentUser.username}`)
+          const data = await res.json()
+          if (res.ok) {
+            setCartItems(data.cartItems || [])
+          }
+        } catch (error) {
+          console.error(error)
+        } finally {
+          setIsLoadingCart(false)
+        }
+      }
+      fetchCart()
+    }
+  }, [activeTab, currentUser])
+
+  // --- 장바구니 상품 삭제 핸들러 ---
+  const handleDeleteCartItem = async (cartItemId: string) => {
+    if (!confirm('정말 장바구니에서 이 상품을 삭제하시겠습니까?')) return
+
+    try {
+      const res = await fetch(`/api/cart?id=${cartItemId}`, {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        // 백엔드 삭제가 성공하면 클라이언트 화면 상태값에서도 해당 아이템을 뽑아내서 지움 (새로고침 없이 실시간 UI 반영 효과)
+        setCartItems((prev) => prev.filter((item) => item._id !== cartItemId))
+      } else {
+        alert(data.message || '삭제에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('상품 삭제 중 서버 오류가 발생했습니다.')
+    }
+  }
+
+  // --- 장바구니 일괄 구매 버튼 클릭 핸들러 ---
+  const handleCartCheckout = () => {
+    if (cartItems.length === 0) return alert('장바구니가 비어 있습니다.')
+
+    // Checkout(결제) 페이지에서 처리할 수 있도록 통일된 규격으로 정보 조립
+    const checkoutData = cartItems.map((item) => ({
+      productId: item.productId?._id,
+      name: item.productId?.name,
+      price: item.productId?.price,
+      quantity: item.quantity,
+      imageUrl: item.productId?.imageUrl,
+      sellerCompany: item.productId?.sellerCompany,
+      sellerId: item.productId?.sellerId,
+    }))
+
+    // 로컬 브라우저 세션에 임시로 굽기
+    sessionStorage.setItem('checkoutData', JSON.stringify({
+      items: checkoutData,
+      isCart: true,
+    }))
+
+    // 결제 폼 화면으로 이동
+    router.push('/checkout')
+  }
+
+  // --- 신규: 구매 품목(주문) 취소 핸들러 ---
+  const handleCancelOrder = async (orderId: string, currentStatus: string) => {
+    // 버튼을 숨겼더라도 방어 차원 검증
+    if (currentStatus === '배송 중' || currentStatus === '배송 완료') {
+      return alert('현재 택배 발송이 완료되어 취소할 수 없습니다.')
+    }
+    
+    if (!confirm('정말 이 상품 주문을 변심 취소하시겠습니까?\n(취소 시 구매 내역에서 영구 삭제됩니다)')) return
+
+    try {
+      const res = await fetch(`/api/orders?orderId=${orderId}`, {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        // 백엔드에서 삭제 성공 시 즉시 클라이언트 뷰 초기화
+        setOrders(prev => prev.filter(order => order._id !== orderId))
+        alert('주문 취소가 완료되었습니다. 환불 진행 중입니다!')
+      } else {
+        alert(data.message || '취소 처리에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('서버 오류로 취소를 실패했습니다.')
+    }
+  }
+
+  // --- 구매 내역 데이터 비동기 조회 로직 ---
+  useEffect(() => {
+    // 탭이 '구매 내역'일 때만 발동
+    if (activeTab === 'orders' && currentUser) {
+      const fetchOrders = async () => {
+        setIsLoadingOrders(true)
+        try {
+          const res = await fetch(`/api/orders?buyerId=${currentUser.username}`)
+          const data = await res.json()
+          if (res.ok) {
+            setOrders(data.orders || [])
+          }
+        } catch (error) {
+          console.error(error)
+        } finally {
+          setIsLoadingOrders(false)
+        }
+      }
+      fetchOrders()
+    }
+  }, [activeTab, currentUser])
 
   // --- 비밀번호 확인 기능 (본인 인증) ---
   const handleVerifyPassword = async (e: React.FormEvent) => {
@@ -214,26 +341,118 @@ export default function Mypage() {
         {activeTab === 'cart' && (
           <ContentArea>
             <Title>장바구니 🛒</Title>
-            {/* 기능이 구현되기 전까지 빈 상태 화면 노출 */}
-            <EmptyStateCard>
-              <EmptyIcon>🛍️</EmptyIcon>
-              <EmptyTitle>장바구니가 비어 있습니다.</EmptyTitle>
-              <EmptyDesc>마음에 드는 상품을 찾아 장바구니에 담아보세요!</EmptyDesc>
-              <GoShopButton onClick={() => router.push('/')}>쇼핑 홈으로 가기</GoShopButton>
-            </EmptyStateCard>
+            
+            {/* 로딩 중 혹은 장바구니가 비었을 때 분기 처리 */}
+            {isLoadingCart ? (
+              <p style={{ marginTop: '2rem', color: '#718096' }}>장바구니 정보를 불러오는 중입니다...</p>
+            ) : cartItems.length === 0 ? (
+              <EmptyStateCard>
+                <EmptyIcon>🛍️</EmptyIcon>
+                <EmptyTitle>장바구니가 비어 있습니다.</EmptyTitle>
+                <EmptyDesc>마음에 드는 상품을 찾아 장바구니에 담아보세요!</EmptyDesc>
+                <GoShopButton onClick={() => router.push('/')}>쇼핑 홈으로 가기</GoShopButton>
+              </EmptyStateCard>
+            ) : (
+              /* 장바구니에 담긴 물건들이 있을 경우 리스트(목록) 렌더링 */
+              <CartList>
+                {cartItems.map((item) => (
+                  <CartItemCard key={item._id}>
+                    {/* 상품 이미지 표시 (Mongoose populate로 불려온 상품 원본 사진) */}
+                    <CartItemImage 
+                      src={item.productId?.imageUrl || ''} 
+                      alt={item.productId?.name} 
+                    />
+                    
+                    <CartItemInfo>
+                      <h4>{item.productId?.name || '삭제된/없는 상품'}</h4>
+                      <p className="price">{item.productId?.price?.toLocaleString() || 0} 원</p>
+                      <p className="qty">선택 수량: {item.quantity} 개</p>
+                    </CartItemInfo>
+                    
+                    <CartItemAction>
+                      {/* 삭제 버튼 연동 */}
+                      <DeleteBtn onClick={() => handleDeleteCartItem(item._id)}>항목 삭제</DeleteBtn>
+                    </CartItemAction>
+                  </CartItemCard>
+                ))}
+
+                {/* 하단 총 개수 및 주문하기 버튼 영역 */}
+                <CheckoutSection>
+                  <span>총 담긴 상품 {cartItems.reduce((acc, crr) => acc + crr.quantity, 0)}개</span>
+                  <GoShopButton 
+                    style={{ backgroundColor: '#2b6cb0', color: 'white', border: 'none' }} 
+                    onClick={handleCartCheckout}
+                  >
+                    일괄 싹쓸이 주문하기
+                  </GoShopButton>
+                </CheckoutSection>
+              </CartList>
+            )}
           </ContentArea>
         )}
 
-        {/* --- [C] 구매 내역 탭 --- */}
+        {/* --- [C] 구매/배송 내역 탭 --- */}
         {activeTab === 'orders' && (
           <ContentArea>
-            <Title>구매 내역 📦</Title>
-            <EmptyStateCard>
-              <EmptyIcon>🧾</EmptyIcon>
-              <EmptyTitle>최근 구매 내역이 없습니다.</EmptyTitle>
-              <EmptyDesc>Ojosama Shop에서 산뜻한 쇼핑을 시작해 보세요!</EmptyDesc>
-              <GoShopButton onClick={() => router.push('/')}>상품 둘러보기</GoShopButton>
-            </EmptyStateCard>
+            <Title>구매/배송 내역 조회 📦</Title>
+
+            {isLoadingOrders ? (
+              <p style={{ marginTop: '2rem', color: '#718096' }}>주문 기록을 불러오는 중입니다...</p>
+            ) : orders.length === 0 ? (
+              <EmptyStateCard>
+                <EmptyIcon>🧾</EmptyIcon>
+                <EmptyTitle>아직 구매 건이 없습니다.</EmptyTitle>
+                <EmptyDesc>Ojosama의 다양하고 개성있는 상품들을 만나보세요.</EmptyDesc>
+                <GoShopButton onClick={() => router.push('/')}>상품 둘러보러 가기</GoShopButton>
+              </EmptyStateCard>
+            ) : (
+              /* 구매 내역 리스트 렌더링 */
+              <CartList>
+                {orders.map((order) => (
+                  // CartItemCard 재사용하되 위/아래 공간 활용 (헤더/본문/푸터)
+                  <CartItemCard key={order._id} style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                    
+                    {/* 상단: 상태 안내 및 날짜 */}
+                    <OrderHeader>
+                      <span className="date">주문일시: {new Date(order.createdAt).toLocaleString()}</span>
+                      <div className="status-row" style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                        <StatusBadge $status={order.status}>{order.status}</StatusBadge>
+                        {/* 물건이 물리적으로 떠나기 전(배송 전)에만 취소할 수 있도록 UI 방어 로직 */}
+                        {order.status !== '배송 중' && order.status !== '배송 완료' && (
+                          <CancelOrderBtn onClick={() => handleCancelOrder(order._id, order.status)}>
+                            ✖ 주문 취소
+                          </CancelOrderBtn>
+                        )}
+                      </div>
+                    </OrderHeader>
+                    
+                    {/* 중단: 결제한 물품들 목록 표기 */}
+                    {order.items.map((item: any, idx: number) => (
+                      <div key={idx} style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                        <CartItemImage src={item.imageUrl || ''} alt="" style={{ width: 80, height: 80 }} />
+                        <CartItemInfo>
+                          <h4 style={{ fontSize: '1.05rem' }}>{item.name}</h4>
+                          <p className="price">{(item.price * item.quantity).toLocaleString()} 원</p>
+                          <p className="qty">판매처: {item.sellerCompany} (수량: {item.quantity}개)</p>
+                        </CartItemInfo>
+                      </div>
+                    ))}
+                    
+                    <hr style={{ border: 'none', borderTop: '1px solid #edf2f7', margin: '1rem 0' }} />
+                    
+                    {/* 하단: 전체 결제정보 요약 */}
+                    <OrderFooter>
+                      <div className="method">
+                        결제 수단: <b>{order.paymentMethod}</b>
+                      </div>
+                      <div className="total">
+                        총 결제 금액: <span className="red">{order.totalAmount.toLocaleString()}원</span>
+                      </div>
+                    </OrderFooter>
+                  </CartItemCard>
+                ))}
+              </CartList>
+            )}
           </ContentArea>
         )}
       </MainContent>
@@ -481,5 +700,163 @@ const GoShopButton = styled.button`
 
   &:hover {
     background-color: #ebf8ff;
+  }
+`
+
+/* --- 장바구니 리스트 카드 Styled Components --- */
+const CartList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+`
+
+const CartItemCard = styled.div`
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  gap: 1.5rem;
+`
+
+const CartItemImage = styled.img`
+  width: 110px;
+  height: 110px;
+  object-fit: contain; /* 사진 잘림 방지 */
+  border-radius: 8px;
+  background-color: #f7fafc;
+  border: 1px solid #edf2f7;
+`
+
+const CartItemInfo = styled.div`
+  flex: 1;
+  text-align: left; /* 카드 내부 텍스트는 좌측 정렬 */
+
+  h4 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0 0 0.6rem 0;
+  }
+  .price {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #e53e3e;
+    margin: 0 0 0.5rem 0;
+  }
+  .qty {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #718096;
+    margin: 0;
+  }
+`
+
+const CartItemAction = styled.div`
+  display: flex;
+`
+
+const DeleteBtn = styled.button`
+  background: none;
+  border: 1px solid #e2e8f0;
+  color: #a0aec0;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: #fff5f5;
+    color: #e53e3e;
+    border-color: #fc8181;
+  }
+`
+
+const CheckoutSection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 2px solid #ebf8ff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d3748;
+`
+
+/* --- 마이페이지 특정(주문 내역) Styled Components --- */
+const OrderHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px dashed #edf2f7;
+  padding-bottom: 1rem;
+
+  .date {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #4a5568;
+  }
+`
+
+// 배송 상태 글자에 따라 테마 색상을 변경해 주는 배찌 컴포넌트
+const StatusBadge = styled.span<{ $status: string }>`
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  
+  /* 상태값 텍스트 분석 후 색상 변경 (Dynamic CSS) */
+  ${({ $status }) => {
+    if ($status === '입금 대기중') return 'background-color: #fefcbf; color: #b7791f;'
+    if ($status === '결제 완료') return 'background-color: #ebf8ff; color: #3182ce;'
+    if ($status === '배송 준비중') return 'background-color: #e9d8fd; color: #6b46c1;'
+    if ($status === '배송 중') return 'background-color: #c6f6d5; color: #2f855a;'
+    if ($status === '배송 완료') return 'background-color: #fed7d7; color: #c53030;'
+    return 'background-color: #edf2f7; color: #4a5568;'
+  }}
+`
+
+// 구매 취소 버튼 (작고 귀엽게 우측 상단 뱃지 옆에 배치)
+const CancelOrderBtn = styled.button`
+  background: white;
+  color: #e53e3e;
+  border: 1px solid #fc8181;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px; /* 알약 모양 둥근 라운드 처리 */
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: #fff5f5;
+    box-shadow: 0 0 5px rgba(229, 62, 62, 0.2);
+  }
+`
+
+const OrderFooter = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.5rem;
+
+  .method {
+    font-size: 0.95rem;
+    color: #718096;
+  }
+  .total {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2d3748;
+    .red {
+      color: #e53e3e;
+      font-size: 1.25rem;
+      margin-left: 0.5rem;
+    }
   }
 `

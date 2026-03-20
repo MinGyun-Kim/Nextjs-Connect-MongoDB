@@ -68,6 +68,76 @@ export default function ProductDetail() {
     fetchProductDetail()
   }, [productId]) // 배열 안의 변수가 달라질 때마다 useEffect 재실행
 
+  // --- 장바구니 담기 로직 ---
+  const handleAddToCart = async () => {
+    // 1. 유저 로그인 상태 확인 (로컬스토리지 기반 검증)
+    const userStr = localStorage.getItem('user')
+    if (!userStr) {
+      alert('로그인한 회원만 사용할 수 있는 기능입니다. 로그인 페이지로 이동합니다.')
+      router.push('/auth?type=login')
+      return
+    }
+
+    const currentUser = JSON.parse(userStr)
+
+    // 2. 현재 로그인된 유저의 아이디와 상품의 고유 ID를 백엔드로 전송
+    try {
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: currentUser.username,
+          productId: product?._id,
+          quantity: 1, // 버튼 클릭 시 1개 담기
+        }),
+      })
+
+      const data = await res.json()
+      
+      if (res.ok) {
+        // 성공적으로 담았을 때 안내 후 사용자 선택에 따라 장바구니 탭이 있는 마이페이지로 이동 유도
+        if (confirm('상품이 방금 스르륵 장바구니에 담겼습니다! 🛒\n지금 바로 내 장바구니 화면으로 가볼까요?')) {
+          router.push('/mypage')
+        }
+      } else {
+        alert(data.message || '장바구니 담기에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('서버 네트워크 오류가 발생했습니다.')
+    }
+  }
+
+  // --- 바로 구매하기 로직 ---
+  const handleBuyNow = () => {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) {
+      alert('결제는 로그인 후 가능합니다.')
+      router.push('/auth?type=login')
+      return
+    }
+
+    if (!product) return
+
+    // 결제창(Checkout)으로 넘길 데이터를 조립하여 브라우저 임시 스토리지에 저장
+    const checkoutItem = {
+      productId: product._id,
+      name: product.name,
+      price: product.price,
+      quantity: 1, // 단일 구매이므로 기본 1개
+      imageUrl: product.imageUrl,
+      sellerCompany: product.sellerCompany,
+      sellerId: product.sellerId,
+    }
+
+    sessionStorage.setItem('checkoutData', JSON.stringify({
+      items: [checkoutItem],
+      isCart: false // 장바구니에서 넘어온 결제가 아니라는 플래그
+    }))
+
+    router.push('/checkout')
+  }
+
   // 데이터를 불러오는 중일 때의 렌더링 화면
   if (isLoading) {
     return <LoadingContainer>상품 정보를 불러오는 중입니다...</LoadingContainer>
@@ -140,10 +210,10 @@ export default function ProductDetail() {
             </DescText>
           </DescriptionBox>
 
-          {/* 장바구니/구매 액션 등 추가 기능을 대비한 빈 영역 (디자인 시각적 풍부함을 위해 버튼 배치) */}
+          {/* 장바구니/구매 액션 버튼 */}
           <ActionButtons>
-            <CartBtn onClick={() => alert('장바구니 기능은 준비 중입니다.')}>장바구니 담기</CartBtn>
-            <BuyBtn onClick={() => alert('구매 기능은 준비 중입니다.')}>바로 구매하기</BuyBtn>
+            <CartBtn onClick={handleAddToCart}>장바구니 담기</CartBtn>
+            <BuyBtn onClick={handleBuyNow}>바로 구매하기</BuyBtn>
           </ActionButtons>
         </InfoSection>
       </DetailContainer>
