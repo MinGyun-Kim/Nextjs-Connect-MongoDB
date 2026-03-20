@@ -122,7 +122,9 @@ export default function Home() {
           {products.length > 0 ? (
             <ProductGrid>
               {products.map(p => (
-                <ProductCard key={p._id}>
+                // ✅ 상품 카드 클릭 시 상품 상세 페이지로 이동하도록 router.push 이벤트 추가 
+                // p._id는 MongoDB가 자동 생성해준 각 상품의 고유 식별자 문자열입니다.
+                <ProductCard key={p._id} onClick={() => router.push(`/products/${p._id}`)}>
                   {p.imageUrl ? (
                     <ProductImage src={p.imageUrl} alt={p.name} />
                   ) : (
