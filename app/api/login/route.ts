@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const user = await User.findOne({ username, role })
     if (!user) {
       return NextResponse.json({ message: '존재하지 않는 사용자이거나 선택한 역할(구매자/판매자)이 일치하지 않습니다.' }, { status: 401 })
-5    }
+    }
 
     // 2. 비밀번호 검증
     const isPasswordValid = await bcrypt.compare(password, user.password)

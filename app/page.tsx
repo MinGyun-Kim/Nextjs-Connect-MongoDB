@@ -12,6 +12,9 @@ export default function Home() {
   
   // 로그인한 유저 정보를 담는 상태
   const [user, setUser] = useState<{ username: string; name?: string; role: string } | null>(null)
+  
+  // 카테고리별 상품 목록 상태
+  const [products, setProducts] = useState<any[]>([])
 
   // 컴포넌트 마운트 시 로컬스토리지에서 로그인 정보 확인
   useEffect(() => {
@@ -24,6 +27,22 @@ export default function Home() {
       }
     }
   }, [])
+
+  // 카테고리가 변경될 때마다 해당 카테고리의 상품 데이터를 불러옴
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(`/api/products?category=${encodeURIComponent(activeCategory)}`)
+        const data = await res.json()
+        if (res.ok) {
+          setProducts(data.products || [])
+        }
+      } catch (error) {
+        console.error('상품 리스트 불러오기 실패:', error)
+      }
+    }
+    fetchProducts()
+  }, [activeCategory])
 
   // 로그아웃 처리
   const handleLogout = () => {
@@ -99,13 +118,33 @@ export default function Home() {
           <SectionTitle>
             <span style={{ color: '#3182ce' }}>{activeCategory}</span> 메뉴
           </SectionTitle>
-          <ProductPlaceholder>
-            <PlaceholderIcon>{categories.find(c => c.name === activeCategory)?.icon}</PlaceholderIcon>
-            <PlaceholderText>
-              이곳에 <strong>{activeCategory}</strong>와 관련된 <br/>
-              하위 메뉴와 상품 리스트가 표시됩니다.
-            </PlaceholderText>
-          </ProductPlaceholder>
+
+          {products.length > 0 ? (
+            <ProductGrid>
+              {products.map(p => (
+                <ProductCard key={p._id}>
+                  {p.imageUrl ? (
+                    <ProductImage src={p.imageUrl} alt={p.name} />
+                  ) : (
+                    <NoImage>이미지 없음</NoImage>
+                  )}
+                  <ProductInfo>
+                    <ProductName>{p.name}</ProductName>
+                    <ProductPrice>{p.price.toLocaleString()}원</ProductPrice>
+                    <ProductCompany>상점명: {p.sellerCompany || 'Ojosama Seller'}</ProductCompany>
+                  </ProductInfo>
+                </ProductCard>
+              ))}
+            </ProductGrid>
+          ) : (
+            <ProductPlaceholder>
+              <PlaceholderIcon>{categories.find(c => c.name === activeCategory)?.icon}</PlaceholderIcon>
+              <PlaceholderText>
+                현재 등록된 <strong>{activeCategory}</strong> 상품이 없습니다. <br/>
+                새로운 상품을 등록해주세요!
+              </PlaceholderText>
+            </ProductPlaceholder>
+          )}
         </ActiveCategorySection>
 
       </MainContent>
@@ -319,4 +358,78 @@ const PlaceholderText = styled.p`
   strong {
     color: #2d3748;
   }
+`
+
+// 상품 리스트 그리드 박스
+const ProductGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+`
+
+// 개별 상품 카드 컨테이너
+const ProductCard = styled.div`
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-5px); /* 마우스 올렸을 때 살짝 위로 떠오르는 모션 */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+`
+
+// 상품의 썸네일 이미지
+const ProductImage = styled.img`
+  width: 100%;
+  aspect-ratio: 1/1;        /* 가로 세로 1:1 비율 고정 */
+  object-fit: cover;        /* 비율 깨지지 않게 꽉 채움 */
+`
+
+// 상품 썸네일 이미지가 없을 때의 대체 UI
+const NoImage = styled.div`
+  width: 100%;
+  aspect-ratio: 1/1;
+  background: #edf2f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a0aec0;
+  font-size: 0.95rem;
+  font-weight: 500;
+`
+
+// 텍스트 정보들이 들어가는 영역
+const ProductInfo = styled.div`
+  padding: 1.25rem 1rem;
+  text-align: left;
+`
+
+// 상품 제목 (길면 ... 으로 자름)
+const ProductName = styled.div`
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 0.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`
+
+// 상품 가격
+const ProductPrice = styled.div`
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #e53e3e;
+  margin-bottom: 0.5rem;
+`
+
+// 판매자 상점명
+const ProductCompany = styled.div`
+  font-size: 0.85rem;
+  color: #718096;
 `
