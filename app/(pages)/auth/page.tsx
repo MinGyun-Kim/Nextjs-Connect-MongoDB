@@ -10,8 +10,8 @@ import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 
 function AuthContent() {
-  const searchParams = useSearchParams() // URLのクエリパラメータを取得
-  const type = searchParams.get('type') // 'type' クエリパラメータを取得
+  const searchParams = useSearchParams()
+  const type = searchParams.get('type')
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -27,9 +27,9 @@ function AuthContent() {
     })
 
     if (res.ok) {
-      alert('ログイン成功')
+      alert('로그인 성공')
     } else {
-      alert('ログイン失敗')
+      alert('로그인 실패')
     }
   }
 
@@ -37,8 +37,7 @@ function AuthContent() {
     <Container>
       {(!type || type === 'login') && (
         <LoginBox>
-          <Image src={Gaitwise} alt="logo" width={100} height={100} layout="responsive" />
-          <Title>Hi, Welcome Back!</Title>
+          <Title>Welcome Ojosama shopingmall</Title>
           <Subtitle>Please select a Type</Subtitle>
 
           <RoleSelect>
@@ -80,11 +79,12 @@ function AuthContent() {
           <LoginButton onClick={handleLogin}>Sign In</LoginButton>
 
           <Links>
-            <a href="/auth?type=forgetpass">Forgot password?</a>
             <p>
-              {/* 아이디 찾기 버튼 - 클릭 시 아이디 찾기 페이지로 이동 (기능은 추후 구현 예정) */}
-              아이디를 잊어버리셨나요? <a href="/auth?type=findid">아이디 찾기</a>
-            </p>
+                {/* 아이디 찾기 버튼 - 클릭 시 아이디 찾기 페이지로 이동 (기능은 추후 구현 예정) */}
+                아이디를 잊어버리셨나요? <a href="/auth?type=findid">아이디 찾기</a>
+              </p>
+            <p>비밀번호를 잊어버리셨나요?<a href="/auth?type=forgetpass"> Forgot password?</a></p>
+           
             <p>
               Don’t have an account yet? <a href="/auth?type=sign-up">Sign up</a>
             </p>

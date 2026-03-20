@@ -193,7 +193,16 @@ export default function ForgetPassword() {
         // 성공 시 Step 5로 이동
         setStep(5)
       } else {
-        setErrorMessage(data.message || '비밀번호 변경에 실패했습니다.')
+        // 서버에서 isSame: true 로 응답이 오면 기존 비밀번호와 동일한 경우입니다.
+        if (data.isSame) {
+          // 브라우저 팝업(alert)을 띄우고
+          alert(data.message || '똑같은 비밀번호는 사용할 수 없습니다.')
+          // 안전을 위해 다시 편하게 입력할 수 있도록 입력값을 비워줍니다.
+          setNewPassword('')
+          setConfirmPassword('')
+        } else {
+          setErrorMessage(data.message || '비밀번호 변경에 실패했습니다.')
+        }
       }
     } catch (error) {
       console.error('비밀번호 변경 오류:', error)
@@ -291,10 +300,10 @@ export default function ForgetPassword() {
       {/* ── Step 5: 비밀번호 재설정 완료 ───────────────── */}
       {step === 5 && (
         <>
-          <Subtitle>비밀번호 변경이 정상적으로 완료되었습니다!</Subtitle>
+          {/* Subtitle 줄 전체 삭제 */}
           <ResultBox>
             <ResultLabel>변경 성공</ResultLabel>
-            <ResultUsername>이제 새 비밀번호로<br/>로그인하세요</ResultUsername>
+            <ResultUsername>비밀번호 변경이 완료됐습니다.</ResultUsername>
           </ResultBox>
           <ActionButton onClick={() => router.push('/auth?type=login')}>
             로그인하러 가기

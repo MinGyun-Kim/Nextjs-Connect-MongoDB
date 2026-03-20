@@ -26,15 +26,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: '사용자를 찾을 수 없습니다.' }, { status: 404 })
     }
 
-    // 5. 새 비밀번호 암호화
+    // 5. 서버에 저장된 기존 비밀번호와 새 비밀번호가 같은지 비교합니다.
+    const isSamePassword = await bcrypt.compare(newPassword, user.password)
+    if (isSamePassword) {
+      // 만약 같다면 400 에러와 함께 isSame 플래그를 내려보내 리액트에서 팝업을 띄울 수 있게 합니다.
+      return NextResponse.json(
+        { message: '똑같은 비밀번호는 사용할 수 없습니다.', isSame: true },
+        { status: 400 }
+      )
+    }
+
+    // 6. 새 비밀번호 암호화
     const saltRounds = 10
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds)
 
-    // 6. 사용자의 비밀번호 업데이트
+    // 7. 사용자의 비밀번호 업데이트
     user.password = hashedPassword
     await user.save()
 
-    // 7. 성공 응답
+    // 8. 성공 응답
     return NextResponse.json({ message: '비밀번호가 성공적으로 변경되었습니다.' }, { status: 200 })
   } catch (error) {
     console.error('Reset Password Error:', error)
