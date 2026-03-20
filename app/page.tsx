@@ -56,7 +56,7 @@ export default function Home() {
     if (user?.role === 'seller') {
       router.push('/seller')
     } else {
-      alert('일반회원 마이페이지는 준비중입니다!') // 추후 구현
+      router.push('/mypage')
     }
   }
 
