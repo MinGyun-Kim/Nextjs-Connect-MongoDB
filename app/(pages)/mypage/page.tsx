@@ -28,6 +28,10 @@ export default function Mypage() {
   const [detailAddress, setDetailAddress] = useState('')
   const [newPassword, setNewPassword] = useState('') // (선택) 변경할 새 비밀번호
 
+  // --- [장바구니 탭] 관련 상태 ---
+  const [cartItems, setCartItems] = useState<any[]>([])
+  const [isLoadingCart, setIsLoadingCart] = useState(false)
+
   // 1. 컴포넌트 마운트 시 권한 확인
   useEffect(() => {
     const userStr = localStorage.getItem('user')
@@ -40,6 +44,50 @@ export default function Mypage() {
       router.push('/auth?type=login')
     }
   }, [router])
+
+  // --- 장바구니 데이터 비동기 조회 로직 ---
+  useEffect(() => {
+    // 탭이 장바구니로 바뀌었을 때 && 유저 정보가 있을 때만 서버에 장바구니 목록 요청
+    if (activeTab === 'cart' && currentUser) {
+      const fetchCart = async () => {
+        setIsLoadingCart(true)
+        try {
+          const res = await fetch(`/api/cart?username=${currentUser.username}`)
+          const data = await res.json()
+          if (res.ok) {
+            setCartItems(data.cartItems || [])
+          }
+        } catch (error) {
+          console.error(error)
+        } finally {
+          setIsLoadingCart(false)
+        }
+      }
+      fetchCart()
+    }
+  }, [activeTab, currentUser])
+
+  // --- 장바구니 상품 삭제 핸들러 ---
+  const handleDeleteCartItem = async (cartItemId: string) => {
+    if (!confirm('정말 장바구니에서 이 상품을 삭제하시겠습니까?')) return
+
+    try {
+      const res = await fetch(`/api/cart?id=${cartItemId}`, {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        // 백엔드 삭제가 성공하면 클라이언트 화면 상태값에서도 해당 아이템을 뽑아내서 지움 (새로고침 없이 실시간 UI 반영 효과)
+        setCartItems((prev) => prev.filter((item) => item._id !== cartItemId))
+      } else {
+        alert(data.message || '삭제에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('상품 삭제 중 서버 오류가 발생했습니다.')
+    }
+  }
 
   // --- 비밀번호 확인 기능 (본인 인증) ---
   const handleVerifyPassword = async (e: React.FormEvent) => {
@@ -214,13 +262,53 @@ export default function Mypage() {
         {activeTab === 'cart' && (
           <ContentArea>
             <Title>장바구니 🛒</Title>
-            {/* 기능이 구현되기 전까지 빈 상태 화면 노출 */}
-            <EmptyStateCard>
-              <EmptyIcon>🛍️</EmptyIcon>
-              <EmptyTitle>장바구니가 비어 있습니다.</EmptyTitle>
-              <EmptyDesc>마음에 드는 상품을 찾아 장바구니에 담아보세요!</EmptyDesc>
-              <GoShopButton onClick={() => router.push('/')}>쇼핑 홈으로 가기</GoShopButton>
-            </EmptyStateCard>
+            
+            {/* 로딩 중 혹은 장바구니가 비었을 때 분기 처리 */}
+            {isLoadingCart ? (
+              <p style={{ marginTop: '2rem', color: '#718096' }}>장바구니 정보를 불러오는 중입니다...</p>
+            ) : cartItems.length === 0 ? (
+              <EmptyStateCard>
+                <EmptyIcon>🛍️</EmptyIcon>
+                <EmptyTitle>장바구니가 비어 있습니다.</EmptyTitle>
+                <EmptyDesc>마음에 드는 상품을 찾아 장바구니에 담아보세요!</EmptyDesc>
+                <GoShopButton onClick={() => router.push('/')}>쇼핑 홈으로 가기</GoShopButton>
+              </EmptyStateCard>
+            ) : (
+              /* 장바구니에 담긴 물건들이 있을 경우 리스트(목록) 렌더링 */
+              <CartList>
+                {cartItems.map((item) => (
+                  <CartItemCard key={item._id}>
+                    {/* 상품 이미지 표시 (Mongoose populate로 불려온 상품 원본 사진) */}
+                    <CartItemImage 
+                      src={item.productId?.imageUrl || ''} 
+                      alt={item.productId?.name} 
+                    />
+                    
+                    <CartItemInfo>
+                      <h4>{item.productId?.name || '삭제된/없는 상품'}</h4>
+                      <p className="price">{item.productId?.price?.toLocaleString() || 0} 원</p>
+                      <p className="qty">선택 수량: {item.quantity} 개</p>
+                    </CartItemInfo>
+                    
+                    <CartItemAction>
+                      {/* 삭제 버튼 연동 */}
+                      <DeleteBtn onClick={() => handleDeleteCartItem(item._id)}>항목 삭제</DeleteBtn>
+                    </CartItemAction>
+                  </CartItemCard>
+                ))}
+
+                {/* 하단 총 개수 및 주문하기 버튼 영역 */}
+                <CheckoutSection>
+                  <span>총 담긴 상품 {cartItems.reduce((acc, crr) => acc + crr.quantity, 0)}개</span>
+                  <GoShopButton 
+                    style={{ backgroundColor: '#2b6cb0', color: 'white' }} 
+                    onClick={() => alert('결제 연동이 필요합니다.')}
+                  >
+                    전체 상품 주문하기
+                  </GoShopButton>
+                </CheckoutSection>
+              </CartList>
+            )}
           </ContentArea>
         )}
 
@@ -482,4 +570,89 @@ const GoShopButton = styled.button`
   &:hover {
     background-color: #ebf8ff;
   }
+`
+
+/* --- 장바구니 리스트 카드 Styled Components --- */
+const CartList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+`
+
+const CartItemCard = styled.div`
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  gap: 1.5rem;
+`
+
+const CartItemImage = styled.img`
+  width: 110px;
+  height: 110px;
+  object-fit: contain; /* 사진 잘림 방지 */
+  border-radius: 8px;
+  background-color: #f7fafc;
+  border: 1px solid #edf2f7;
+`
+
+const CartItemInfo = styled.div`
+  flex: 1;
+  text-align: left; /* 카드 내부 텍스트는 좌측 정렬 */
+
+  h4 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0 0 0.6rem 0;
+  }
+  .price {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #e53e3e;
+    margin: 0 0 0.5rem 0;
+  }
+  .qty {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #718096;
+    margin: 0;
+  }
+`
+
+const CartItemAction = styled.div`
+  display: flex;
+`
+
+const DeleteBtn = styled.button`
+  background: none;
+  border: 1px solid #e2e8f0;
+  color: #a0aec0;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: #fff5f5;
+    color: #e53e3e;
+    border-color: #fc8181;
+  }
+`
+
+const CheckoutSection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 2px solid #ebf8ff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d3748;
 `
