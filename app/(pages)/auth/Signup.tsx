@@ -7,6 +7,7 @@ import DaumPostcode from 'react-daum-postcode'
 export default function SignUp() {
   // --- 상태 관리 (State Management) ---
   const [name, setName] = useState('') // 이름
+  const [phoneNumber, setPhoneNumber] = useState('') // 전화번호 상태 추가
   const [email, setEmail] = useState('') // 이메일
   const [emailCode, setEmailCode] = useState('') // 이메일 인증 번호
   const [birthdate, setBirthdate] = useState('') // 생년월일
@@ -181,6 +182,7 @@ export default function SignUp() {
     // 기존에 "중복 확인" 버튼을 눌렀을 때도 필드를 채우라고 나오지 않도록
     // 중복 확인 버튼은 type="button"으로 폼 제출과 분리(별개 취급)했습니다.
     if (!name) return alert('이름을 입력해주세요.')
+    if (!phoneNumber) return alert('전화번호를 입력해주세요.') // 제출 시 전화번호 누락 검증 추가
     if (!birthdate) return alert('생년월일을 입력해주세요.')
     if (!username) return alert('아이디를 입력해주세요.')
     if (!password) return alert('비밀번호를 입력해주세요.')
@@ -207,9 +209,10 @@ export default function SignUp() {
       return
     }
 
-    // 서버에 보낼 데이터 객체 구성
+    // 서버에 보낼 데이터 객체 구성 (전화번호 추가)
     const payload = {
       name,
+      phoneNumber, // 입력받은 전화번호를 API로 전달
       email,
       birthdate,
       username,
@@ -280,6 +283,17 @@ export default function SignUp() {
             placeholder="이름을 입력하세요"
             value={name}
             onChange={(e) => setName(e.target.value)}
+          />
+        </InputGroup>
+
+        {/* --- 추가된 전화번호 입력란 (모든 회원 공통 필수) --- */}
+        <InputGroup>
+          <Label>전화번호</Label>
+          <InputField
+            type="tel"
+            placeholder="전화번호를 입력하세요 (예: 010-1234-5678)"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
           />
         </InputGroup>
 
@@ -439,10 +453,12 @@ export default function SignUp() {
 const Container = styled.div`
   display: flex;
   justify-content: center;
-  align-items: center;
+  /* 안의 내용이 화면보다 길어질 때 위쪽 엘리먼트가 짤리는(가려지는) 현상을 방지하기 위해 
+     align-items를 center 대신 flex-start로 변경합니다. 그리고 내부 박스에 margin: auto 적용. */
+  align-items: flex-start;
   min-height: 100vh;
   background-color: #f0f2f5;
-  padding: 2rem;
+  padding: 2.5rem 1rem; /* 모바일 등 작은 화면을 위해 여백 조절 */
 `
 
 const SignUpBox = styled.form`
@@ -452,6 +468,8 @@ const SignUpBox = styled.form`
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 480px;
+  /* 화면 중앙에 배치되도록 margin auto 설정 */
+  margin: auto;
 `
 
 const Title = styled.h2`

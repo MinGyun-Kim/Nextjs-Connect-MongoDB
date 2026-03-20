@@ -253,6 +253,7 @@ const FindIdBox = styled.div`
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* 부드러운 그림자 */
   text-align: center;          /* 텍스트 가운데 정렬 */
   width: 350px;                /* 고정 너비 — 다른 카드와 동일한 크기 */
+  margin: auto;                /* 페이지 중앙 정렬 */
 `
 
 // 페이지 제목 스타일

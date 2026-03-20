@@ -6,6 +6,7 @@ const UserSchema = new mongoose.Schema(
     name: { type: String, default: '' },
     email: { type: String, default: '', unique: true }, // 이메일
     birthdate: { type: String, default: '' }, // 생년월일
+    phoneNumber: { type: String, default: '' }, // 전화번호 필드 추가
 
     username: { type: String, default: '', unique: true }, // 아이디
     password: { type: String, default: '' }, // 암호화된 비밀번호

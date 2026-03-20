@@ -328,6 +328,7 @@ const ForgetPasswordBox = styled.div`
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   text-align: center;
   width: 350px;
+  margin: auto; /* 화면 중앙 정렬 */
 `
 
 const Title = styled.h2`
