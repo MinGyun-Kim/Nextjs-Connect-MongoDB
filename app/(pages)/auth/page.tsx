@@ -15,21 +15,51 @@ function AuthContent() {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState('analyst')
+  const [role, setRole] = useState<'general'|'seller'>('general')
+
+  // 판매자로 로그인 시 회사를 증명할 항목들
+  const [companyName, setCompanyName] = useState('')
+  const [businessNumber, setBusinessNumber] = useState('')
 
   const handleLogin = async () => {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password, role }),
-    })
+    if (!username || !password) return alert('아이디와 비밀번호를 모두 입력해주세요.')
+    if (role === 'seller') {
+      if (!companyName || !businessNumber) return alert('판매자로 로그인하시려면 회사명과 사업자 등록 번호를 입력해야 합니다.')
+    }
 
-    if (res.ok) {
-      alert('로그인 성공')
-    } else {
-      alert('로그인 실패')
+    const payload = { 
+      username, 
+      password, 
+      role,
+      ...(role === 'seller' && { companyName, businessNumber })
+    }
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        alert('로그인 성공')
+        // 로컬 스토리지에 세션 임시 저장
+        localStorage.setItem('user', JSON.stringify({ username, role, ...data.user }))
+        
+        // 판매자면 판매자 대시보드로, 일반이면 메인 페이지로 이동
+        if (role === 'seller') {
+          window.location.href = '/seller'
+        } else {
+          window.location.href = '/'
+        }
+      } else {
+        alert(`로그인 실패: ${data.message}`)
+      }
+    } catch (e) {
+      console.error(e)
+      alert('로그인 요청 중 서버 오류가 발생했습니다.')
     }
   }
 
@@ -37,66 +67,88 @@ function AuthContent() {
     <Container>
       {(!type || type === 'login') && (
         <LoginBox>
-          <Title>Welcome Ojosama shopingmall</Title>
-          <Subtitle>Please select a Type</Subtitle>
+          <Title>Ojosama Shop</Title>
+          <Subtitle>로그인 유형을 선택해주세요</Subtitle>
 
           <RoleSelect>
             <label>
               <input
                 type="radio"
                 name="role"
-                value="analyst"
-                checked={role === 'analyst'}
-                onChange={(e) => setRole(e.target.value)}
+                value="general"
+                checked={role === 'general'}
+                onChange={() => setRole('general')}
               />
-              구매자
+              일반회원
             </label>
             <label>
               <input
                 type="radio"
                 name="role"
-                value="doctor"
-                checked={role === 'doctor'}
-                onChange={(e) => setRole(e.target.value)}
+                value="seller"
+                checked={role === 'seller'}
+                onChange={() => setRole('seller')}
               />
               판매자
             </label>
           </RoleSelect>
 
           <InputField
-            type="email"
-            placeholder="ID"
+            type="text"
+            placeholder="아이디"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
           <InputField
             type="password"
-            placeholder="Password"
+            placeholder="비밀번호"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <LoginButton onClick={handleLogin}>Sign In</LoginButton>
+          {role === 'seller' && (
+            <SellerSection>
+              <InputGroup>
+                <Label>회사명</Label>
+                <InputField
+                  type="text"
+                  placeholder="회사명 (판매자용)"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  style={{ marginBottom: '0.5rem' }}
+                />
+              </InputGroup>
+              <InputGroup>
+                <Label>사업자 등록 번호</Label>
+                <InputField
+                  type="text"
+                  placeholder="사업자 등록 번호 (판매자용)"
+                  value={businessNumber}
+                  onChange={(e) => setBusinessNumber(e.target.value)}
+                  style={{ marginBottom: '0' }}
+                />
+              </InputGroup>
+            </SellerSection>
+          )}
+
+          <LoginButton onClick={handleLogin}>로그인</LoginButton>
 
           <Links>
             <p>
-                {/* 아이디 찾기 버튼 - 클릭 시 아이디 찾기 페이지로 이동 (기능은 추후 구현 예정) */}
-                아이디를 잊어버리셨나요? <a href="/auth?type=findid">아이디 찾기</a>
-              </p>
-            <p>비밀번호를 잊어버리셨나요?<a href="/auth?type=forgetpass"> Forgot password?</a></p>
-           
+              아이디를 잊어버리셨나요? <a href="/auth?type=findid">아이디 찾기</a>
+            </p>
             <p>
-              Don’t have an account yet? <a href="/auth?type=sign-up">Sign up</a>
+              비밀번호를 잊어버리셨나요? <a href="/auth?type=forgetpass">비밀번호 찾기</a>
+            </p>
+            <p style={{ marginTop: '0.5rem' }}>
+              계정이 없으신가요? <a href="/auth?type=sign-up">회원가입</a>
             </p>
           </Links>
         </LoginBox>
       )}
 
       {type === 'sign-up' && <SignUp />}
-
       {type === 'forgetpass' && <ForgetPassword />}
-
-      {/* 아이디 찾기 페이지 - 기능은 추후 구현 예정 */}
       {type === 'findid' && <FindId />}
     </Container>
   )
@@ -176,13 +228,36 @@ const LoginButton = styled.button`
 
 const Links = styled.div`
   margin-top: 1rem;
+  font-size: 0.9rem;
 
   a {
     color: #3182ce;
     text-decoration: none;
+    font-weight: 500;
   }
 
   a:hover {
     text-decoration: underline;
   }
+`
+
+const SellerSection = styled.div`
+  background-color: #f7fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px dashed #cbd5e0;
+  text-align: left;
+`
+
+const InputGroup = styled.div`
+  margin-bottom: 0.5rem;
+`
+
+const Label = styled.label`
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: #4a5568;
 `

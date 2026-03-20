@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { useRouter } from 'next/navigation'
 
@@ -9,20 +9,63 @@ export default function Home() {
 
   // 현재 선택된 카테고리를 추적하는 상태
   const [activeCategory, setActiveCategory] = useState(categories[0].name)
+  
+  // 로그인한 유저 정보를 담는 상태
+  const [user, setUser] = useState<{ username: string; name?: string; role: string } | null>(null)
+
+  // 컴포넌트 마운트 시 로컬스토리지에서 로그인 정보 확인
+  useEffect(() => {
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        setUser(JSON.parse(userStr))
+      } catch (e) {
+        console.error('유저 정보 파싱 오류:', e)
+      }
+    }
+  }, [])
+
+  // 로그아웃 처리
+  const handleLogout = () => {
+    localStorage.removeItem('user')
+    setUser(null)
+    alert('로그아웃 되었습니다.')
+  }
+
+  // 마이페이지 이동 처리 (판매자는 셀러 대시보드로, 일반은 마이페이지로)
+  const handleMyPage = () => {
+    if (user?.role === 'seller') {
+      router.push('/seller')
+    } else {
+      alert('일반회원 마이페이지는 준비중입니다!') // 추후 구현
+    }
+  }
 
   return (
     <PageContainer>
       {/* 1. 글로벌 네비게이션 바 (GNB) */}
       <Navbar>
-        <Logo>Ojosama Shop</Logo>
+        <Logo onClick={() => router.push('/')}>Ojosama Shop</Logo>
         
         <NavActions>
-          <LoginButton onClick={() => router.push('/auth?type=login')}>
-            로그인
-          </LoginButton>
-          <SignupButton onClick={() => router.push('/auth?type=sign-up')}>
-            회원가입
-          </SignupButton>
+          {user ? (
+            <>
+              {/* 로그인 성공 상태: 유저 이름과 마이페이지/로그아웃 버튼 표시 */}
+              <WelcomeText><strong>{user.name || user.username}</strong>님 환영합니다!</WelcomeText>
+              <LoginButton onClick={handleMyPage}>마이페이지</LoginButton>
+              <SignupButton onClick={handleLogout}>로그아웃</SignupButton>
+            </>
+          ) : (
+            <>
+              {/* 비로그인 상태: 로그인/회원가입 노출 */}
+              <LoginButton onClick={() => router.push('/auth?type=login')}>
+                로그인
+              </LoginButton>
+              <SignupButton onClick={() => router.push('/auth?type=sign-up')}>
+                회원가입
+              </SignupButton>
+            </>
+          )}
         </NavActions>
       </Navbar>
 
@@ -114,6 +157,16 @@ const NavActions = styled.div`
   display: flex;
   align-items: center;
   gap: 0.8rem;
+`
+
+const WelcomeText = styled.span`
+  font-size: 0.95rem;
+  color: #4a5568;
+  margin-right: 0.5rem;
+  
+  strong {
+    color: #2b6cb0;
+  }
 `
 
 const LoginButton = styled.button`
