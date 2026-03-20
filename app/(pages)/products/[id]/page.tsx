@@ -108,6 +108,36 @@ export default function ProductDetail() {
     }
   }
 
+  // --- 바로 구매하기 로직 ---
+  const handleBuyNow = () => {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) {
+      alert('결제는 로그인 후 가능합니다.')
+      router.push('/auth?type=login')
+      return
+    }
+
+    if (!product) return
+
+    // 결제창(Checkout)으로 넘길 데이터를 조립하여 브라우저 임시 스토리지에 저장
+    const checkoutItem = {
+      productId: product._id,
+      name: product.name,
+      price: product.price,
+      quantity: 1, // 단일 구매이므로 기본 1개
+      imageUrl: product.imageUrl,
+      sellerCompany: product.sellerCompany,
+      sellerId: product.sellerId,
+    }
+
+    sessionStorage.setItem('checkoutData', JSON.stringify({
+      items: [checkoutItem],
+      isCart: false // 장바구니에서 넘어온 결제가 아니라는 플래그
+    }))
+
+    router.push('/checkout')
+  }
+
   // 데이터를 불러오는 중일 때의 렌더링 화면
   if (isLoading) {
     return <LoadingContainer>상품 정보를 불러오는 중입니다...</LoadingContainer>
@@ -183,7 +213,7 @@ export default function ProductDetail() {
           {/* 장바구니/구매 액션 버튼 */}
           <ActionButtons>
             <CartBtn onClick={handleAddToCart}>장바구니 담기</CartBtn>
-            <BuyBtn onClick={() => alert('결제 모듈은 준비 중입니다.')}>바로 구매하기</BuyBtn>
+            <BuyBtn onClick={handleBuyNow}>바로 구매하기</BuyBtn>
           </ActionButtons>
         </InfoSection>
       </DetailContainer>
