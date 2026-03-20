@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import styled from 'styled-components'
 import SignUp from './Signup'
 import ForgetPassword from './ForgetPass'
+import FindId from './FindId' // 아이디 찾기 컴포넌트
 import { Gaitwise } from '@/public/svg'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
@@ -81,6 +82,10 @@ function AuthContent() {
           <Links>
             <a href="/auth?type=forgetpass">Forgot password?</a>
             <p>
+              {/* 아이디 찾기 버튼 - 클릭 시 아이디 찾기 페이지로 이동 (기능은 추후 구현 예정) */}
+              아이디를 잊어버리셨나요? <a href="/auth?type=findid">아이디 찾기</a>
+            </p>
+            <p>
               Don’t have an account yet? <a href="/auth?type=sign-up">Sign up</a>
             </p>
           </Links>
@@ -90,6 +95,9 @@ function AuthContent() {
       {type === 'sign-up' && <SignUp />}
 
       {type === 'forgetpass' && <ForgetPassword />}
+
+      {/* 아이디 찾기 페이지 - 기능은 추후 구현 예정 */}
+      {type === 'findid' && <FindId />}
     </Container>
   )
 }
