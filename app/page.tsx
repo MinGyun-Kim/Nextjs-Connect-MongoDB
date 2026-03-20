@@ -1,80 +1,133 @@
-import Image from 'next/image'
+'use client'
+
+import styled from 'styled-components'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
-  return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
-      <main className="row-start-2 flex flex-col items-center gap-8 sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-center font-[family-name:var(--font-geist-mono)] text-sm sm:text-left">
-          <li className="mb-2">
-            Get started by editing{' '}
-            <code className="rounded bg-black/[.05] px-1 py-0.5 font-semibold dark:bg-white/[.06]">app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const router = useRouter()
 
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <a
-            className="flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent bg-foreground px-4 text-sm text-background transition-colors hover:bg-[#383838] sm:h-12 sm:px-5 sm:text-base dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="flex h-10 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:border-transparent hover:bg-[#f2f2f2] sm:h-12 sm:min-w-44 sm:px-5 sm:text-base dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex flex-wrap items-center justify-center gap-6">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="https://nextjs.org/icons/file.svg" alt="File icon" width={16} height={16} />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="https://nextjs.org/icons/window.svg" alt="Window icon" width={16} height={16} />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="https://nextjs.org/icons/globe.svg" alt="Globe icon" width={16} height={16} />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  return (
+    <PageContainer>
+      {/* 글로벌 네비게이션 바 (GNB) */}
+      <Navbar>
+        <Logo>Ojosama Shop</Logo>
+        
+        <NavActions>
+          {/* 로그인 / 회원가입 버튼 */}
+          <AuthButton onClick={() => router.push('/auth?type=login')}>
+            로그인 / 회원가입
+          </AuthButton>
+        </NavActions>
+      </Navbar>
+
+      {/* 메인 콘텐츠 영역 (추후 기능 추가 예정) */}
+      <MainContent>
+        <HeroSection>
+          <HeroTitle>환영합니다!</HeroTitle>
+          <HeroSubtitle>최고의 상품을 만나보세요.</HeroSubtitle>
+        </HeroSection>
+      </MainContent>
+    </PageContainer>
   )
 }
+
+// --- Styled Components ---
+
+const PageContainer = styled.div`
+  min-height: 100vh;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+`
+
+// 헤더(네비게이션 바) 영역
+const Navbar = styled.header`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); /* 부드러운 그림자로 깊이감 부여 */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+`
+
+// 로고 텍스트 (추후 로고 이미지로 대체 가능)
+const Logo = styled.h1`
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a202c;
+  margin: 0;
+  letter-spacing: -0.5px;
+  cursor: pointer;
+`
+
+// 네비게이션 액션 영역 (우측 버튼 등)
+const NavActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`
+
+// 로그인 / 회원가입 버튼
+const AuthButton = styled.button`
+  padding: 0.6rem 1.25rem;
+  background-color: #2b6cb0;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #2c5282;
+    transform: translateY(-1px); /* 살짝 위로 뜨는 효과 */
+    box-shadow: 0 4px 12px rgba(43, 108, 176, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`
+
+// 메인 콘텐츠 컨테이너
+const MainContent = styled.main`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+`
+
+// 첫 화면 배너 영역
+const HeroSection = styled.section`
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`
+
+const HeroTitle = styled.h2`
+  font-size: 3rem;
+  font-weight: 800;
+  color: #2d3748;
+  margin-bottom: 1rem;
+`
+
+const HeroSubtitle = styled.p`
+  font-size: 1.25rem;
+  color: #718096;
+`
