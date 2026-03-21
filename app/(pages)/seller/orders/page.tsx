@@ -91,7 +91,6 @@ export default function SellerOrderManagement() {
           <NavItem onClick={() => router.push('/seller/products')}>상품 관리</NavItem>
           <NavItem className="active" onClick={() => router.push('/seller/orders')}>주문 배송 관리</NavItem>
           <NavItem onClick={() => router.push('/seller/stats')}>매출 통계</NavItem>
-          <NavItem onClick={() => alert('상점 설정 준비중')}>상점 설정</NavItem>
         </NavList>
         <SidebarFooter>
           <LogoutButton onClick={() => { localStorage.removeItem('user'); router.push('/auth?type=login') }}>
