@@ -195,7 +195,7 @@ export default function ProductDetail() {
 
           {/* 판매를 담당하는 회사(상점) 이름. 비어있으면 기본값 적용 */}
           <SellerInfo>
-            販売 <span>{product.sellerCompany || 'Ojosama Default Seller'}</span>
+            판매처<span>{product.sellerCompany || 'Ojosama Default Seller'}</span>
           </SellerInfo>
 
           {/* 
