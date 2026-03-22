@@ -39,8 +39,9 @@ export default function SellerDashboard() {
           {/* 현재 대시보드(셀러 홈)이므로 강조 */}
           <NavItem className="active" onClick={() => router.push('/seller')}>대시보드</NavItem>
           <NavItem onClick={() => router.push('/seller/products')}>상품 관리</NavItem>
-          <NavItem onClick={() => router.push('/seller/orders')}>주문 배송 관리</NavItem>
-          <NavItem onClick={() => router.push('/seller/stats')}>매출 통계</NavItem>
+          <NavItem>주문 배송 관리</NavItem>
+          <NavItem>매출 통계</NavItem>
+          <NavItem onClick={() => router.push('/seller/profile')}>정보 수정</NavItem>
         </NavList>
         <SidebarFooter>
           <LogoutButton onClick={() => { localStorage.removeItem('user'); router.push('/auth?type=login') }}>
