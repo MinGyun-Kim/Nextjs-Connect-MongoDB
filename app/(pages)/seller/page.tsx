@@ -54,7 +54,7 @@ export default function SellerDashboard() {
           <NavItem onClick={() => router.push('/seller/products')}>상품 관리</NavItem>
           <NavItem>주문 배송 관리</NavItem>
           <NavItem>매출 통계</NavItem>
-          <NavItem>상점 설정</NavItem>
+          <NavItem onClick={() => router.push('/seller/profile')}>정보 수정</NavItem>
         </NavList>
         <SidebarFooter>
           {/* 테스트용 임시 로그아웃 기능 (추후 실제 상태관리 연동 필요) */}
