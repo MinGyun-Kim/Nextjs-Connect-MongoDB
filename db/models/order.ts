@@ -5,6 +5,7 @@ const OrderItemSchema = new mongoose.Schema({
   name: { type: String, required: true },
   price: { type: Number, required: true },
   quantity: { type: Number, required: true },
+  selectedOption: { type: String, default: '' },
   imageUrl: { type: String },
   sellerCompany: { type: String },
   sellerId: { type: String, required: true }, // 판매자 확인용
@@ -40,6 +41,9 @@ const OrderSchema = new mongoose.Schema(
   }
 )
 
-const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema)
+if (mongoose.models.Order) {
+  delete mongoose.models.Order;
+}
+const Order = mongoose.model('Order', OrderSchema)
 
 export default Order

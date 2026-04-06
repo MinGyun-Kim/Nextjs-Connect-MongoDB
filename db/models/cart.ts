@@ -11,6 +11,9 @@ const CartSchema = new mongoose.Schema(
     
     // 장바구니에 담은 상품의 개수 (기본 1개)
     quantity: { type: Number, default: 1 },
+    
+    // 구매자가 선택한 옵션값 (예: 'M', '빨강')
+    selectedOption: { type: String, default: '' },
   },
   {
     timestamps: true, // 담은 시간(createdAt) 자동 생성
@@ -18,6 +21,9 @@ const CartSchema = new mongoose.Schema(
   }
 )
 
-const Cart = mongoose.models.Cart || mongoose.model('Cart', CartSchema)
+if (mongoose.models.Cart) {
+  delete mongoose.models.Cart;
+}
+const Cart = mongoose.model('Cart', CartSchema)
 
 export default Cart

@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   try {
     await dbConnect()
     const body = await req.json()
-    const { name, price, category, description, imageUrl, sellerId, sellerCompany } = body
+    const { name, price, category, description, imageUrl, options, sellerId, sellerCompany } = body
 
     if (!name || price === undefined || !category || !sellerId) {
       return NextResponse.json({ message: '필수 항목이 누락되었습니다.' }, { status: 400 })
@@ -19,6 +19,7 @@ export async function POST(req: Request) {
       category,
       description,
       imageUrl,
+      options: options || [],
       sellerId,
       sellerCompany
     })

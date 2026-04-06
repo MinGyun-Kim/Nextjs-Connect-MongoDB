@@ -30,7 +30,12 @@ export default function ProductDetail() {
     imageUrl: string
     sellerId: string
     sellerCompany: string
+    options?: string[]
   } | null>(null)
+
+  // 구매 수량 및 선택한 옵션 상태
+  const [quantity, setQuantity] = useState(1)
+  const [selectedOption, setSelectedOption] = useState('')
 
   // 데이터를 불려오는 동안 화면에 '로딩 중' UI를 보여주기 위한 상태
   const [isLoading, setIsLoading] = useState(true)
@@ -80,7 +85,13 @@ export default function ProductDetail() {
 
     const currentUser = JSON.parse(userStr)
 
-    // 2. 현재 로그인된 유저의 아이디와 상품의 고유 ID를 백엔드로 전송
+    // 2. 옵션 필수 선택 확인 로직
+    if (product?.options && product.options.length > 0 && !selectedOption) {
+      alert('상품 옵션을 선택해주세요.')
+      return
+    }
+
+    // 3. 현재 로그인된 유저의 아이디와 상품의 고유 ID를 백엔드로 전송
     try {
       const res = await fetch('/api/cart', {
         method: 'POST',
@@ -88,7 +99,8 @@ export default function ProductDetail() {
         body: JSON.stringify({
           username: currentUser.username,
           productId: product?._id,
-          quantity: 1, // 버튼 클릭 시 1개 담기
+          quantity: quantity,
+          selectedOption: selectedOption,
         }),
       })
 
@@ -119,12 +131,18 @@ export default function ProductDetail() {
 
     if (!product) return
 
+    if (product?.options && product.options.length > 0 && !selectedOption) {
+      alert('상품 옵션을 선택해주세요.')
+      return
+    }
+
     // 결제창(Checkout)으로 넘길 데이터를 조립하여 브라우저 임시 스토리지에 저장
     const checkoutItem = {
       productId: product._id,
       name: product.name,
       price: product.price,
-      quantity: 1, // 단일 구매이므로 기본 1개
+      quantity: quantity,
+      selectedOption: selectedOption,
       imageUrl: product.imageUrl,
       sellerCompany: product.sellerCompany,
       sellerId: product.sellerId,
@@ -209,6 +227,39 @@ export default function ProductDetail() {
               {product.description || '판매자가 작성한 상세 설명이 없습니다.'}
             </DescText>
           </DescriptionBox>
+
+          {/* 옵션 선택 구역 */}
+          {product.options && product.options.length > 0 && (
+            <OptionSection>
+              <OptionLabel>옵션 선택</OptionLabel>
+              <OptionSelect 
+                value={selectedOption} 
+                onChange={(e) => setSelectedOption(e.target.value)}
+              >
+                <option value="" disabled>옵션을 선택하세요</option>
+                {product.options.map((opt, idx) => (
+                  <option key={idx} value={opt}>{opt}</option>
+                ))}
+              </OptionSelect>
+            </OptionSection>
+          )}
+
+          {/* 수량 선택 및 총 금액 구역 */}
+          <ControlsWrap>
+            <QuantitySection>
+              <QuantityLabel>수량</QuantityLabel>
+              <QuantityControl>
+                <QuantityBtn onClick={() => setQuantity(q => Math.max(1, q - 1))}>-</QuantityBtn>
+                <QuantityValue>{quantity}</QuantityValue>
+                <QuantityBtn onClick={() => setQuantity(q => q + 1)}>+</QuantityBtn>
+              </QuantityControl>
+            </QuantitySection>
+
+            <TotalPriceSection>
+              <TotalLabel>총 상품 금액</TotalLabel>
+              <TotalPrice>{(product.price * quantity).toLocaleString()} 원</TotalPrice>
+            </TotalPriceSection>
+          </ControlsWrap>
 
           {/* 장바구니/구매 액션 버튼 */}
           <ActionButtons>
@@ -412,11 +463,118 @@ const DescText = styled.div`
   white-space: pre-wrap; /* 판매자가 엔터(Enter)쳐서 작성한 문단을 화면에 그대로 보존하여 출력 */
 `
 
+// 옵션 선택 및 수량 관련 UI
+const OptionSection = styled.div`
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`
+
+const OptionLabel = styled.label`
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #4a5568;
+`
+
+const OptionSelect = styled.select`
+  padding: 0.8rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #1a202c;
+  background-color: #ffffff;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: #3182ce;
+  }
+`
+
+const ControlsWrap = styled.div`
+  background-color: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`
+
+const QuantitySection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`
+
+const QuantityLabel = styled.span`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4a5568;
+`
+
+const QuantityControl = styled.div`
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #ffffff;
+`
+
+const QuantityBtn = styled.button`
+  background-color: #ffffff;
+  border: none;
+  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #4a5568;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #edf2f7;
+  }
+`
+
+const QuantityValue = styled.div`
+  width: 40px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #2d3748;
+  border-left: 1px solid #cbd5e0;
+  border-right: 1px solid #cbd5e0;
+  padding: 0.4rem 0;
+`
+
+const TotalPriceSection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+`
+
+const TotalLabel = styled.span`
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2d3748;
+`
+
+const TotalPrice = styled.div`
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #e53e3e;
+`
+
 // 쇼핑몰 느낌을 주기 위한 가짜 하단 구매/장바구니 버튼 그룹
 const ActionButtons = styled.div`
   display: flex;
   gap: 1rem;
-  margin-top: 3rem;
+  margin-top: 1.5rem;
 `
 
 // 장바구니 버튼 공통 골격 (흰 바탕)

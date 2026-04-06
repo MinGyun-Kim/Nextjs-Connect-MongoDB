@@ -103,6 +103,7 @@ export default function Mypage() {
       name: item.productId?.name,
       price: item.productId?.price,
       quantity: item.quantity,
+      selectedOption: item.selectedOption,
       imageUrl: item.productId?.imageUrl,
       sellerCompany: item.productId?.sellerCompany,
       sellerId: item.productId?.sellerId,
@@ -366,6 +367,7 @@ export default function Mypage() {
                     <CartItemInfo>
                       <h4>{item.productId?.name || '삭제된/없는 상품'}</h4>
                       <p className="price">{item.productId?.price?.toLocaleString() || 0} 원</p>
+                      {item.selectedOption && <p className="option">옵션: {item.selectedOption}</p>}
                       <p className="qty">선택 수량: {item.quantity} 개</p>
                     </CartItemInfo>
                     
@@ -433,6 +435,7 @@ export default function Mypage() {
                         <CartItemInfo>
                           <h4 style={{ fontSize: '1.05rem' }}>{item.name}</h4>
                           <p className="price">{(item.price * item.quantity).toLocaleString()} 원</p>
+                          {item.selectedOption && <p className="option">옵션: {item.selectedOption}</p>}
                           <p className="qty">판매처: {item.sellerCompany} (수량: {item.quantity}개)</p>
                         </CartItemInfo>
                       </div>
@@ -745,6 +748,11 @@ const CartItemInfo = styled.div`
     font-weight: 800;
     color: #e53e3e;
     margin: 0 0 0.5rem 0;
+  }
+  .option {
+    font-size: 0.95rem;
+    color: #4a5568;
+    margin: 0 0 0.3rem 0;
   }
   .qty {
     font-size: 0.95rem;

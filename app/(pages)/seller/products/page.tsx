@@ -15,6 +15,7 @@ export default function SellerProductManagement() {
   const [category, setCategory] = useState('') // 드롭다운으로 선택할 카테고리 종류
   const [productDesc, setProductDesc] = useState('') // 상품 상세 설명
   const [imagePreview, setImagePreview] = useState<string | null>(null) // 업로드한 이미지 화면 미리보기 데이터 URL
+  const [productOptions, setProductOptions] = useState('') // 쉼표로 구분할 상품 옵션
 
   // 드롭다운에 노출될 기본 8가지 메인 카테고리 옵션 리스트
   const categoryOptions = [
@@ -85,6 +86,7 @@ export default function SellerProductManagement() {
           category,
           description: productDesc,
           imageUrl: imagePreview || '', // base64 문자열 그대로 저장 (프로토타입용 간이 방법)
+          options: productOptions ? productOptions.split(',').map(opt => opt.trim()).filter(Boolean) : [],
           sellerId: user?.username || 'unknown',
           sellerCompany: user?.companyName || ''
         })
@@ -99,6 +101,7 @@ export default function SellerProductManagement() {
         setProductPrice('')
         setCategory('')
         setProductDesc('')
+        setProductOptions('')
         setImagePreview(null)
       } else {
         alert(data.message || '상품 등록에 실패했습니다.')
@@ -238,6 +241,17 @@ export default function SellerProductManagement() {
                   placeholder="상품에 대한 장점이나 상세한 설명을 적어주세요."
                   value={productDesc}
                   onChange={(e) => setProductDesc(e.target.value)}
+                />
+              </InputGroup>
+
+              {/* 상품 옵션 입력란 */}
+              <InputGroup>
+                <Label>상품 옵션 (선택)</Label>
+                <InputField 
+                  type="text" 
+                  placeholder="쉼표(,)로 구분해 옵션을 입력하세요 (예: M, L, XL)"
+                  value={productOptions}
+                  onChange={(e) => setProductOptions(e.target.value)}
                 />
               </InputGroup>
             </InputCol>

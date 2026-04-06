@@ -6,14 +6,14 @@ import Cart from '@/db/models/cart'
 export async function POST(req: Request) {
   try {
     await dbConnect()
-    const { username, productId, quantity = 1 } = await req.json()
+    const { username, productId, quantity = 1, selectedOption = '' } = await req.json()
 
     if (!username || !productId) {
       return NextResponse.json({ message: '사용자 정보와 상품 ID가 필요합니다.' }, { status: 400 })
     }
 
-    // 이미 유저의 장바구니에 똑같은 상품이 있는지 확인
-    const existingCartItem = await Cart.findOne({ username, productId })
+    // 이미 유저의 장바구니에 똑같은 상품과 똑같은 옵션이 있는지 확인
+    const existingCartItem = await Cart.findOne({ username, productId, selectedOption })
 
     if (existingCartItem) {
       // 1-1. 이미 있다면 기존 수량에 더하기
@@ -25,7 +25,8 @@ export async function POST(req: Request) {
       const newCartItem = await Cart.create({
         username,
         productId,
-        quantity
+        quantity,
+        selectedOption
       })
       return NextResponse.json({ message: '장바구니에 상품을 담았습니다.', cartItem: newCartItem }, { status: 201 })
     }

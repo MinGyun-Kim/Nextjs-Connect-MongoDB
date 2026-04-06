@@ -203,6 +203,7 @@ export default function CheckoutPage() {
                   <img src={item.imageUrl || ''} alt="상품썸네일" />
                   <div className="info">
                     <p className="name">{item.name}</p>
+                    {item.selectedOption && <p className="option">옵션: {item.selectedOption}</p>}
                     <p className="qty">{item.quantity}개 / {(item.price * item.quantity).toLocaleString()}원</p>
                   </div>
                 </ItemRow>
@@ -395,6 +396,11 @@ const ItemRow = styled.div`
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 140px; 
+    }
+    .option {
+      font-size: 0.85rem;
+      color: #4a5568;
+      margin: 0 0 0.2rem 0;
     }
     .qty {
       font-size: 0.9rem;
