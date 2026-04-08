@@ -13,7 +13,7 @@ export default function SellerOrderManagement() {
 
   // 1. 판매자 권한 확인
   useEffect(() => {
-    const userStr = localStorage.getItem('user')
+    const userStr = sessionStorage.getItem('user')
     if (userStr) {
       try {
         const user = JSON.parse(userStr)
@@ -93,7 +93,7 @@ export default function SellerOrderManagement() {
           <NavItem onClick={() => router.push('/seller/stats')}>매출 통계</NavItem>
         </NavList>
         <SidebarFooter>
-          <LogoutButton onClick={() => { localStorage.removeItem('user'); router.push('/auth?type=login') }}>
+          <LogoutButton onClick={() => { sessionStorage.removeItem('user'); router.push('/auth?type=login') }}>
             로그아웃
           </LogoutButton>
         </SidebarFooter>

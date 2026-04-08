@@ -26,7 +26,7 @@ export default function SellerProfile() {
 
   useEffect(() => {
     const checkAuth = () => {
-      const userStr = localStorage.getItem('user')
+      const userStr = sessionStorage.getItem('user')
       if (userStr) {
         try {
           const user = JSON.parse(userStr)
@@ -63,12 +63,12 @@ export default function SellerProfile() {
   }
 
   const handleProfileUpdate = () => {
-    const userStr = localStorage.getItem('user')
+    const userStr = sessionStorage.getItem('user')
     if (userStr) {
       try {
         const user = JSON.parse(userStr)
         const updatedUser = { ...user, ...userInfo }
-        localStorage.setItem('user', JSON.stringify(updatedUser))
+        sessionStorage.setItem('user', JSON.stringify(updatedUser))
         alert('판매자 정보가 성공적으로 수정되었습니다.')
       } catch (e) {
         console.error(e)
@@ -94,7 +94,7 @@ export default function SellerProfile() {
         <SidebarFooter>
           <LogoutButton
             onClick={() => {
-              localStorage.removeItem('user')
+              sessionStorage.removeItem('user')
               router.push('/auth?type=login')
             }}
           >

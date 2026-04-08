@@ -46,7 +46,7 @@ function AuthContent() {
       if (res.ok) {
         alert('로그인 성공')
         // 로컬 스토리지에 세션 임시 저장
-        localStorage.setItem('user', JSON.stringify({ username, role, ...data.user }))
+        sessionStorage.setItem('user', JSON.stringify({ username, role, ...data.user }))
         
         // 판매자면 판매자 대시보드로, 일반이면 메인 페이지로 이동
         if (role === 'seller') {

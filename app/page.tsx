@@ -18,7 +18,7 @@ export default function Home() {
 
   // 컴포넌트 마운트 시 로컬스토리지에서 로그인 정보 확인
   useEffect(() => {
-    const userStr = localStorage.getItem('user')
+    const userStr = sessionStorage.getItem('user')
     if (userStr) {
       try {
         setUser(JSON.parse(userStr))
@@ -46,7 +46,7 @@ export default function Home() {
 
   // 로그아웃 처리
   const handleLogout = () => {
-    localStorage.removeItem('user')
+    sessionStorage.removeItem('user')
     setUser(null)
     alert('로그아웃 되었습니다.')
   }

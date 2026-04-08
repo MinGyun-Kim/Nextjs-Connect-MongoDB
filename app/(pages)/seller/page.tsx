@@ -10,7 +10,7 @@ export default function SellerDashboard() {
 
   // 판매자로 로그인 되어있는지 검증
   useEffect(() => {
-    const userStr = localStorage.getItem('user')
+    const userStr = sessionStorage.getItem('user')
     if (userStr) {
       try {
         const user = JSON.parse(userStr)
@@ -44,7 +44,7 @@ export default function SellerDashboard() {
           <NavItem onClick={() => router.push('/seller/profile')}>정보 수정</NavItem>
         </NavList>
         <SidebarFooter>
-          <LogoutButton onClick={() => { localStorage.removeItem('user'); router.push('/auth?type=login') }}>
+          <LogoutButton onClick={() => { sessionStorage.removeItem('user'); router.push('/auth?type=login') }}>
             로그아웃
           </LogoutButton>
         </SidebarFooter>

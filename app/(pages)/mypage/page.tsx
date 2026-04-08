@@ -38,7 +38,7 @@ export default function Mypage() {
 
   // 1. 컴포넌트 마운트 시 권한 확인
   useEffect(() => {
-    const userStr = localStorage.getItem('user')
+    const userStr = sessionStorage.getItem('user')
     if (userStr) {
       const user = JSON.parse(userStr)
       // 권한 검사: 이 페이지는 구매자(general)만 접근하도록 유도할 수도 있지만, 일단 로그인 유저면 띄워줍니다.
@@ -259,7 +259,7 @@ export default function Mypage() {
         <SidebarFooter>
           {/* 로그아웃 처리 */}
           <LogoutButton onClick={() => {
-            localStorage.removeItem('user')
+            sessionStorage.removeItem('user')
             router.push('/auth?type=login')
           }}>
             로그아웃

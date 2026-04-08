@@ -26,8 +26,8 @@ export default function SellerProductManagement() {
   // --- 페이지 로드 시(혹은 새로고침 시) 판매자 권한을 체크하는 Effect ---
   useEffect(() => {
     const checkAuth = () => {
-      // localStorage에 저장된 'user' 정보를 꺼내옵니다.
-      const userStr = localStorage.getItem('user')
+      // sessionStorage에 저장된 'user' 정보를 꺼내옵니다.
+      const userStr = sessionStorage.getItem('user')
       if (userStr) {
         try {
           const user = JSON.parse(userStr)
@@ -72,7 +72,7 @@ export default function SellerProductManagement() {
     }
     
     // 유저 정보 가져오기 (판매자 식별용)
-    const userStr = localStorage.getItem('user')
+    const userStr = sessionStorage.getItem('user')
     const user = userStr ? JSON.parse(userStr) : null
     
     // 2. 백엔드(DB 연동 API) 호출을 통해 상품 등록
@@ -137,7 +137,7 @@ export default function SellerProductManagement() {
           {/* 하단 로그아웃 버튼 (로컬 스토리지 비우고 로그인창 이동) */}
           <LogoutButton
             onClick={() => {
-              localStorage.removeItem('user')
+              sessionStorage.removeItem('user')
               router.push('/auth?type=login')
             }}
           >

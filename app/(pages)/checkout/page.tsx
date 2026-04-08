@@ -28,7 +28,7 @@ export default function CheckoutPage() {
   // 1. 초기 데이터 세팅 (인증 및 주문할 데이터 파싱)
   useEffect(() => {
     // 유저 확인
-    const userStr = localStorage.getItem('user')
+    const userStr = sessionStorage.getItem('user')
     if (!userStr) {
       alert('비정상적인 접근이거나 로그아웃 되었습니다.')
       router.push('/auth?type=login')

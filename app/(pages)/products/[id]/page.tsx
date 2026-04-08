@@ -76,7 +76,7 @@ export default function ProductDetail() {
   // --- 장바구니 담기 로직 ---
   const handleAddToCart = async () => {
     // 1. 유저 로그인 상태 확인 (로컬스토리지 기반 검증)
-    const userStr = localStorage.getItem('user')
+    const userStr = sessionStorage.getItem('user')
     if (!userStr) {
       alert('로그인한 회원만 사용할 수 있는 기능입니다. 로그인 페이지로 이동합니다.')
       router.push('/auth?type=login')
@@ -122,7 +122,7 @@ export default function ProductDetail() {
 
   // --- 바로 구매하기 로직 ---
   const handleBuyNow = () => {
-    const userStr = localStorage.getItem('user')
+    const userStr = sessionStorage.getItem('user')
     if (!userStr) {
       alert('결제는 로그인 후 가능합니다.')
       router.push('/auth?type=login')
