@@ -31,9 +31,12 @@ const OrderSchema = new mongoose.Schema(
     // 주문 상태 현황 트래킹 (enum 적용으로 오타 및 비정상 입력 방지)
     status: { 
       type: String, 
-      enum: ['입금 대기중', '결제 완료', '배송 준비중', '배송 중', '배송 완료'],
+      enum: ['입금 대기중', '결제 완료', '배송 준비중', '배송 중', '배송 완료', '주문 취소'],
       default: '결제 완료' 
     },
+
+    // 취소 사유 저장
+    cancelReason: { type: String, default: '' },
   },
   {
     timestamps: true,

@@ -129,8 +129,8 @@ export default function SellerProductManagement() {
           <NavItem onClick={() => router.push('/seller')}>대시보드</NavItem>
           {/* 현재 위치한 탭이므로 'active' 클래스를 주어 파란색으로 강조 */}
           <NavItem className="active" onClick={() => router.push('/seller/products')}>상품 관리</NavItem>
-          <NavItem>주문 배송 관리</NavItem>
-          <NavItem>매출 통계</NavItem>
+          <NavItem onClick={() => router.push('/seller/orders')}>주문 배송 관리</NavItem>
+          <NavItem onClick={() => router.push('/seller/stats')}>매출 통계</NavItem>
           <NavItem onClick={() => router.push('/seller/profile')}>정보 수정</NavItem>
         </NavList>
         <SidebarFooter>

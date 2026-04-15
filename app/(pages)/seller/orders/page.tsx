@@ -11,6 +11,9 @@ export default function SellerOrderManagement() {
   const [orders, setOrders] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null)
+  const [cancelReasonInput, setCancelReasonInput] = useState('')
+
   // 1. 판매자 권한 확인
   useEffect(() => {
     const userStr = sessionStorage.getItem('user')
@@ -69,6 +72,34 @@ export default function SellerOrderManagement() {
         // 성공 시 화면 최신화
         setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: newStatus } : o))
         alert('상태가 정상적으로 반영되었습니다.')
+      } else {
+        const data = await res.json()
+        alert(data.message || '상태 변경 중 오류가 발생했습니다.')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('서버 네트워크 오류가 발생했습니다.')
+    }
+  }
+
+  // 4. 주문 취소 처리 (PUT api/orders)
+  const handleCancelOrder = async (orderId: string) => {
+    if (!cancelReasonInput.trim()) {
+      return alert('취소 사유를 기입해주세요.')
+    }
+    if (!confirm('정말 이 주문을 취소하시겠습니까?')) return
+
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, newStatus: '주문 취소', cancelReason: cancelReasonInput })
+      })
+      if (res.ok) {
+        setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: '주문 취소', cancelReason: cancelReasonInput } : o))
+        setCancelOrderId(null)
+        setCancelReasonInput('')
+        alert('주문 취소가 완료되었습니다.')
       } else {
         const data = await res.json()
         alert(data.message || '상태 변경 중 오류가 발생했습니다.')
@@ -138,7 +169,10 @@ export default function SellerOrderManagement() {
                       </td>
                       <td className="items">
                         {order.items.map((it:any, idx:number) => (
-                          <div key={idx}>- {it.name} ({it.quantity}개)</div>
+                          <div key={idx} style={{ marginBottom: '0.4rem' }}>
+                            - {it.name} <br />
+                            <span style={{ fontSize: '0.8rem', color: '#718096' }}>옵션: {it.selectedOption || '없음'} / {it.quantity}개</span>
+                          </div>
                         ))}
                       </td>
                       <td className="amount">
@@ -146,18 +180,46 @@ export default function SellerOrderManagement() {
                         <br/>({order.paymentMethod})
                       </td>
                       <td className="action">
-                        {/* 상태 변경 드롭다운 UI */}
-                        <StatusSelect 
-                          value={order.status}
-                          $status={order.status}
-                          onChange={(e) => handleStatusChange(order._id, order.status, e.target.value)}
-                        >
-                          <option value="입금 대기중">입금 대기중</option>
-                          <option value="결제 완료">결제 완료 (입금확인)</option>
-                          <option value="배송 준비중">배송 준비중</option>
-                          <option value="배송 중">🚀 택배 발송 (배송중)</option>
-                          <option value="배송 완료">✅ 배송 완료</option>
-                        </StatusSelect>
+                        {order.status === '주문 취소' ? (
+                          <div style={{ color: '#e53e3e', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                            ❌ 주문 취소됨 <br/>
+                            <span style={{ fontSize: '0.8rem', color: '#718096', fontWeight: 'normal', display: 'block', marginTop: '4px' }}>(사유: {order.cancelReason})</span>
+                          </div>
+                        ) : (
+                          <>
+                            {/* 상태 변경 드롭다운 UI */}
+                            <StatusSelect 
+                              value={order.status}
+                              $status={order.status}
+                              onChange={(e) => handleStatusChange(order._id, order.status, e.target.value)}
+                            >
+                              <option value="입금 대기중">입금 대기중</option>
+                              <option value="결제 완료">결제 완료 (입금확인)</option>
+                              <option value="배송 준비중">배송 준비중</option>
+                              <option value="배송 중">🚀 택배 발송 (배송중)</option>
+                              <option value="배송 완료">✅ 배송 완료</option>
+                            </StatusSelect>
+                            
+                            <div style={{ marginTop: '0.5rem' }}>
+                              {cancelOrderId === order._id ? (
+                                <CancelInputBox>
+                                  <input 
+                                    type="text" 
+                                    placeholder="취소 사유 입력" 
+                                    value={cancelReasonInput} 
+                                    onChange={e => setCancelReasonInput(e.target.value)}
+                                  />
+                                  <div className="btn-group">
+                                    <button onClick={() => handleCancelOrder(order._id)}>확인</button>
+                                    <button onClick={() => { setCancelOrderId(null); setCancelReasonInput(''); }}>닫기</button>
+                                  </div>
+                                </CancelInputBox>
+                              ) : (
+                                <CancelBadge onClick={() => setCancelOrderId(order._id)}>주문 취소하기</CancelBadge>
+                              )}
+                            </div>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -291,4 +353,53 @@ const StatusSelect = styled.select<{ $status: string }>`
   }}
 
   &:hover { filter: brightness(0.95); }
+`
+
+const CancelBadge = styled.span`
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 0.8rem;
+  color: #e53e3e;
+  border: 1px solid #fc8181;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: white;
+  transition: all 0.2s;
+  &:hover {
+    background-color: #fff5f5;
+  }
+`
+
+const CancelInputBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  input {
+    padding: 0.4rem;
+    font-size: 0.85rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    outline: none;
+    &:focus { border-color: #2b6cb0; }
+  }
+  .btn-group {
+    display: flex;
+    gap: 0.3rem;
+    button {
+      flex: 1;
+      font-size: 0.8rem;
+      padding: 0.3rem;
+      cursor: pointer;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      &:first-child {
+        background-color: #2b6cb0;
+        color: white;
+        border: none;
+      }
+      &:hover { filter: brightness(0.95); }
+    }
+  }
 `

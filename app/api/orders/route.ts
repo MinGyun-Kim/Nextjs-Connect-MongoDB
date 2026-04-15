@@ -72,20 +72,25 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
   try {
     await dbConnect()
-    const { orderId, newStatus } = await req.json()
+    const { orderId, newStatus, cancelReason } = await req.json()
 
     if (!orderId || !newStatus) {
       return NextResponse.json({ message: '주문 번호와 변경할 상태값이 필요합니다.' }, { status: 400 })
     }
 
-    const validStatuses = ['입금 대기중', '결제 완료', '배송 준비중', '배송 중', '배송 완료']
+    const validStatuses = ['입금 대기중', '결제 완료', '배송 준비중', '배송 중', '배송 완료', '주문 취소']
     if (!validStatuses.includes(newStatus)) {
       return NextResponse.json({ message: '유효하지 않은 상태값입니다.' }, { status: 400 })
     }
 
+    const updateData: any = { status: newStatus }
+    if (newStatus === '주문 취소') {
+      updateData.cancelReason = cancelReason || '판매자 직권 취소'
+    }
+
     const updatedOrder = await Order.findByIdAndUpdate(
       orderId, 
-      { status: newStatus }, 
+      updateData, 
       { new: true } // 업데이트된 문서를 즉시 리턴받기 위함
     )
 
